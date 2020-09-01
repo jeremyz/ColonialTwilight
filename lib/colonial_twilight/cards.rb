@@ -18,14 +18,23 @@ module ColonialTwilight
     end
     def dual?; @attributes & CARD_SINGLE == 0 end
     def single?; @attributes & CARD_SINGLE == CARD_SINGLE end
-    def flnmarked?; @attributes & CARD_FLN_MARKED == CARD_FLN_MARKED end
-    def alwaysplay?; @attributes & CARD_ALWAYS_PLAY == CARD_ALWAYS_PLAY end
+    def fln_marked?; @attributes & CARD_FLN_MARKED == CARD_FLN_MARKED end
+    def always_play?; @attributes & CARD_ALWAYS_PLAY == CARD_ALWAYS_PLAY end
+    def capability?; false end
+    def fln_effective?; false end
+    def fln_effectiveness; 0 end
+    def fln_playable?
+      # reduce GOV support or resources or commitment
+      # shift France Track toward F
+      # place FLN base or increase FLN resources
+      false
+    end
     def check
       # @attributes.each do |attr| raise "unknown attribute : #{attr}" if attr not in ATTRS end
-      puts single?
-      puts dual?
-      puts flnmarked?
-      puts alwaysplay?
+      # puts single?
+      # puts dual?
+      # puts flnmarked?
+      # puts alwaysplay?
     end
   end
 
