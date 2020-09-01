@@ -10,3 +10,6 @@ So there it is, my proof of concept, a quick and dirty ruby implementation of th
 
 CLI behaviour is copied on [coltwi](https://github.com/sellmerfud/coltwi).
 
+## CLI demo
+
+![CLI Demo](cli.gif)
