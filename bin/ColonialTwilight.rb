@@ -9,9 +9,10 @@ class OptParser
 
   class Options
 
-    attr_accessor :verbose, :clearscreen
+    attr_accessor :debug_bot, :clearscreen, :verbose
 
     def initialize
+      @debug_bot = false
       @verbose = false
       @gui = false
       @clearscreen = false
@@ -22,6 +23,7 @@ class OptParser
       parser.separator ""
       parser.separator "Specific options:"
 
+      add_debug_bot(parser)
       add_verbose(parser)
       add_gui(parser)
       add_clearscreen(parser)
@@ -38,13 +40,18 @@ class OptParser
       end
     end
 
+    def add_debug_bot(parser)
+      parser.on("-d", "--debug_bot", "Run with FLN bot debug messages") do |v|
+        @debug_bot = v
+      end
+    end
     def add_verbose(parser)
-      parser.on("-v", "--[no-]verbose", "Run verbosely") do |v|
-        @verbose = v
+      parser.on("-v", "--verbose", "Run more verbose ui") do |v|
+        @verbose = true
       end
     end
     def add_gui(parser)
-      parser.on("-g", "--gui", "Run verbosely") do
+      parser.on("-g", "--gui", "Run in gui mode") do
         @gui = true
         puts "gui is not implemented yet ..."
         exit
