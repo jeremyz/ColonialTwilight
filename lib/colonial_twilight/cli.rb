@@ -9,6 +9,43 @@ module ColonialTwilight
 
   class Cli
 
+    FRANCE_TRACK=[' A ',' B ',' C ',' D ',' E ',' F '].map {|e| e.white.on_blue}.freeze
+    TRACK = {
+      :support_commitment => ' Support & Commitment '.white.on_blue,
+      :opposition_bases => ' FLN bases & Opposition '.black.on_green
+    }
+    FACTION = {
+      :FLN => ' FLN '.black.on_green,
+      :GOV => ' Government '.white.on_blue
+    }.freeze
+    CONTROL = {
+      :FLN => ' FLN '.black.on_green,
+      :GOV => ' Government '.white.on_blue,
+      :uncontrolled => ' Uncontrolled '.black.on_light_white
+    }.freeze
+    ALIGNMENT = {
+      :oppose => ' Oppose '.black.on_green,
+      :support => ' Support '.white.on_blue,
+      :neutral => ' Neutral '.black.on_light_white
+    }.freeze
+    BOXES = {
+      :available => 'Available'.cyan,
+      :out_of_play => 'Out Of Play'.cyan,
+      :casualties => 'Casualties'.cyan,
+      :france_track => 'France Track'.white.on_blue,
+      :border_track => 'Border Track'.yellow.on_black,
+    }.freeze
+    FORCES = {
+      :fln_active=>'Active Guerrillas'.red.on_black,
+      :fln_underground=>'Underground Guerrillas'.green.on_black,
+      :fln_base=>'FLN Base'.white.on_black,
+      :french_troops=>'French Troops'.on_blue,
+      :french_police=>'French Police'.black.on_light_blue,
+      :gov_base=>'Government Base'.on_blue,
+      :algerian_troops=>'Algerian Troops'.black.on_green,
+      :algerian_police=>'Algerian Police'.black.on_light_green
+    }.freeze
+
     def initialize options
       @options = options
       @game = ColonialTwilight::Game.new options
@@ -22,6 +59,7 @@ module ColonialTwilight
       ret << chose('Choose a ruleset', @game.rules) { |s| a = s.split('-'); a[0] = a[0].yellow; a.join('-') }
       exit(0) if ret[-1] < 0
       @game.start self, *ret
+      # @game.start self, 0, 0
     end
 
     def logo
@@ -39,14 +77,12 @@ module ColonialTwilight
       puts String::CLS
     end
 
-    PS = { :FLN => 'FLN'.red, :GOV => 'Government'.red }
-
     def turn_start turn, first, second
       clear_screen if @options.clearscreen
       puts
       puts ("=" * 80).white.bold.on_light_green
-      puts " Turn : #{turn.to_s.red} ".black.on_white + "\t First Eligible  : #{PS[first.faction]} ".black.on_white
-      puts "\t\t Second Eligible : #{PS[second.faction]} ".black.on_white
+      puts " Turn : #{turn.to_s.red} ".black.on_white + "\t 1st Eligible : ".black.on_white + FACTION[first.faction]
+      puts "\t\t 2nd Eligible : ".black.on_white + FACTION[second.faction]
     end
 
     def pull_card max
@@ -72,7 +108,122 @@ module ColonialTwilight
       puts
       clear_screen if @options.clearscreen
       puts
-      puts " #{PS[p.faction]} is #{first ? 'First Eligible' : 'Second Eligible'}".black.on_white
+      puts " #{FACTION[p.faction]} is #{first ? '1st Eligible' : '2nd Eligible'}".black.on_white
+    end
+
+    def adjust_track ar
+      puts
+      puts "\tadjust #{TRACK[:support_commitment]} from #{ar[0].to_s.cyan} to #{ar[2].to_s.red}" if ar[0] != ar[2]
+      puts "\tadjust #{TRACK[:opposition_bases]} from #{ar[1].to_s.cyan} to #{ar[3].to_s.red}" if ar[1] != ar[3]
+    end
+
+    def show_player_action player, h
+      selected = h[:selected]
+      faction = FACTION[player.faction]
+      puts
+      show_action(faction, selected, h) if h.has_key? :action
+      # show_activity(faction, selected, h) if h.has_key? :activity
+      show_transfers(selected, h[:transfers]) if h.has_key? :transfers
+      show_markers(selected, h[:markers]) if h.has_key? :markers
+      show_controls(selected, h[:controls]) if h.has_key? :controls
+      case selected
+      when :france_track
+        puts "\t   => shift #{1.to_s.cyan} space onto #{FRANCE_TRACK[h[:france_track]]}"
+      when :border_track
+        puts "\t   => shift #{1.to_s.cyan} space onto #{h[:border_track].to_s.yellow.on_black}"
+      end
+      print "\u21b5  " # carriage return
+      gets
+      print "\033[1A\033\k\u2713\n\n" # up, erase line, check
+    end
+
+    # def show_control selected, control
+    #     s = "\t   => shift #{'control'.cyan} to #{CONTROL[control]}"
+    #     s += " in #{selected.name.magenta}" if @options.verbose
+    #     puts s
+    # end
+
+    def show_controls selected, controls
+      controls.each do |k,v|
+        puts "\t   => shift #{'control'.cyan} to #{CONTROL[v[1]]} in #{k.name.magenta}" if k != selected
+      end
+      if controls.has_key? selected
+        s = "\t   => shift #{'control'.cyan} to #{CONTROL[controls[selected][1]]}"
+        s += " in #{selected.name.magenta}" if @options.verbose
+        puts s
+      end
+    end
+
+    def show_action faction, selected, h
+      action = h[:action]
+      rcs = h[:resources]
+      incr = (rcs[:cost] <=> 0)
+      v = rcs[:cost].abs.to_s.cyan
+      if action == :pass
+        puts "\t#{'PASS'.red} increase #{'resources'.yellow} by #{v} to #{rcs[:value].to_s.red}"
+      else
+        action = action.to_s.capitalize
+        sym = selected.is_a?(Symbol)
+        where = sym ? "on #{BOXES[selected]}" : "in #{selected.name.magenta}"
+        cost = (incr == 0 ? nil : "#{incr < 0 ? 'increase' : 'decrease'} #{'resources'.yellow} by #{v} to #{rcs[:value].to_s.red}")
+        if @options.verbose
+          puts "\t#{faction} executes a #{action.yellow} Operation #{where}"
+          puts "\t#{cost}" unless cost.nil?
+          puts "\tin #{selected.name.magenta} :" unless sym
+        else
+          s = "\t#{action.black.on_white} #{where} "
+          s += cost unless cost.nil?
+          puts s
+        end
+      end
+    end
+
+    def show_transfers selected, transfers
+      transfers.each do |tr|
+        n = tr[:n].to_s.cyan
+        from, to = tr[:from], tr[:to]
+        what, towhat = tr[:what], tr[:towhat]
+        if from == to
+          s = "\t   => flip #{n} #{FORCES[what]} to #{FORCES[towhat]}"
+          s += " in #{selected.name.cyan}" if @options.verbose
+          puts s
+        else
+          froms = (from.is_a?(Sector) ? from.name.magenta : BOXES[from] )
+          tos = (to.is_a?(Sector) ? to.name.magenta : BOXES[to] )
+          s = "\t   => transfer #{n} #{FORCES[what]}"
+          s += " from #{froms}" if @options.verbose or from != selected
+          s += " to #{tos}" if @options.verbose or to != selected
+          s += " as #{FORCES[towhat]}" if @options.verbose or (what != towhat and to.is_a?(Sector))
+          # puts "\t   => shift #{'control'.cyan} to #{CONTROL[controls[from]]} in #{froms}" if from != selected and controls.has_key?(from)
+          # puts "\t   => shift #{'control'.cyan} to #{CONTROL[controls[to]]} in #{tos}" if to != selected and controls.has_key?(to)
+          puts s
+        end
+      end
+    end
+
+    def show_markers selected, markers
+      markers.each do |mk|
+        what, n, towards, from, to = mk
+        case what
+        when :terror
+          act = (n > 0 ? 'add' : 'remove').red
+          s = "\t   => #{act} #{n.to_s.cyan} #{'Terror'.yellow} markers"
+          s += " in #{selected.name.magenta} from #{from.to_s.cyan} to #{to.to_s.red}" if @options.verbose
+          puts s
+        when :alignment
+          if @options.verbose
+            puts "\t   => shift #{selected.name.magenta} #{n.to_s.cyan} times towards #{ALIGNMENT[towards]} from #{ALIGNMENT[from]} to #{ALIGNMENT[to]}"
+          else
+            puts "\t   => shift #{'Alignment'.yellow} onto #{ALIGNMENT[to]}"
+          end
+        end
+      end
+    end
+
+    def continue? bot
+      l = bot ? ["FLN :\t\tlet the FLN bot play", "Pivotal Event:\tplay a Pivotal Event"] : ["Play:\t\tplay your turn"]
+      ret = chose('Next action', l, true) { |s| a = s.split(':'); a[0] = a[0].yellow; a.join(':') }
+      exit(0) if ret < 0
     end
 
     def chose prompt, list, quit=false
@@ -119,7 +270,14 @@ module ColonialTwilight
 end
 
 if $PROGRAM_NAME == __FILE__
-  io = ColonialTwilight::Cli.new
+  class O
+    def clearscreen; false end
+  end
+  class P
+    def initialize f; @faction = f end
+    def faction; @faction end
+  end
+  io = ColonialTwilight::Cli.new O.new
   io.logo
   puts
   l = ['Short: 1960-1962: The End Game','Medium: 1957-1962: Midgame Development','Full: 1955-1962: Algerie Francaise!']
@@ -132,5 +290,20 @@ if $PROGRAM_NAME == __FILE__
   ret = io.ask 'Are you sure', false
   puts ret
   puts
-  io.turn_start(1, [:FLN, :GOV])
+  io.turn_start 666, P.new(:FLN), P.new(:GOV)
+  ColonialTwilight::Cli::FACTION.each do |k,f|
+    puts " #{k} => #{f}"
+  end
+  ColonialTwilight::Cli::CONTROL.each do |k,f|
+    puts " #{k} => #{f}"
+  end
+  ColonialTwilight::Cli::ALIGNMENT.each do |k,f|
+    puts " #{k} => #{f}"
+  end
+  ColonialTwilight::Cli::BOXES.each do |k,f|
+    puts " #{k} => #{f}"
+  end
+  ColonialTwilight::Cli::FORCES.each do |k,f|
+    puts " #{k} => #{f}"
+  end
 end
