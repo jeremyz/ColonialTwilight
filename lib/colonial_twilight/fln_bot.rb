@@ -610,7 +610,7 @@ module ColonialTwilight
         # :pass, :event, :agitate
       end
       cost = h[:fln_resources]
-      @board.fln_resources -= cost
+      @board.shift_resources :fln, -cost
       @expended_resources += cost unless h.has_key? :already_expended # _reserve_agitate
       h[:resources] = {:cost=>cost, :value=>@board.fln_resources}
       h[:controls].each do |k,v|

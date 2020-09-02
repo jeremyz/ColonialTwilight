@@ -3,18 +3,6 @@
 
 require 'json'
 
-# FIXME :
-#   - json should not be here
-#   - has_?
-#   - can_?
-#
-#   check min/max bases, points, tracks
-#
-# delegate [syms].each do |s| define_method s delegate.instance_method(s) end
-#
-# scenario  as JSON ?, tools to generate them
-#
-
 module ColonialTwilight
 
   class Forces
@@ -311,10 +299,31 @@ module ColonialTwilight
       end
     end
 
+    def shift_commitment dc
+        @commitment = (@commitment + dc).clamp(0, 50)
+    end
+
+    def shift_resources who, dr
+      if who == :fln
+        @fln_resources = (@fln_resources + dr).clamp(0, 50)
+      elsif who == :gov
+        @gov_resources = (@gov_resources + dr).clamp(0, 50)
+      else
+        raise "shift_resources : unknown who : #{who}"
+      end
+    end
+
     def shift_france_track dt
       ft = @france_track + dt
       return false if (ft < 0 or ft > 5)
       @france_track = ft
+      true
+    end
+
+    def shift_border_zone_track dt
+      ft = @shift_border_zone_track + dt
+      return false if (ft < 0 or ft > 4)
+      @border_zone_track = ft
       true
     end
 
@@ -345,6 +354,8 @@ module ColonialTwilight
         @opposition_bases += s.pop if s.alignment == :oppose
         @support_commitment += s.pop if s.alignment == :support
       end
+      @support_commitment = @support_commitment.clamp(0, 50)
+      @opposition_bases = @opposition_bases.clamp(0, 50)
       values << @support_commitment << @opposition_bases
     end
 
@@ -486,12 +497,12 @@ module ColonialTwilight
     end
 
     def short
-      self.commitment = 15
-      self.fln_resources = 15
-      self.gov_resources = 20
-      self.resettled_sectors = 0
-      self.france_track = 4
-      self.border_zone_track = 3
+      @commitment = 15
+      @fln_resources = 15
+      @gov_resources = 20
+      @resettled_sectors = 0
+      @france_track = 4
+      @border_zone_track = 3
       @out_of_play.fln_underground = 5
       @available.gov_bases = 2
       @available.french_police = 4
