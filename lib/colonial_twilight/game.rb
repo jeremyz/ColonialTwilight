@@ -5,6 +5,7 @@ require 'colonial_twilight/board'
 require 'colonial_twilight/cards'
 require 'colonial_twilight/player'
 require 'colonial_twilight/fln_bot'
+require 'colonial_twilight/gov_player'
 
 module ColonialTwilight
 
@@ -66,9 +67,11 @@ module ColonialTwilight
       @turn = 1
       @cards = []
       @actions = []
-      @players = [FLNBot.new(self, :FLN), Player.new(self, :GOV)]
+      @players = [FLNBot.new(self, :FLN), GOVPlayer.new(self, :GOV)]
       play
     end
+
+    def current_card; @cards[-1] end
 
     def play
       while true
@@ -80,12 +83,12 @@ module ColonialTwilight
 
         ui.continue? @players[0].instance_of? FLNBot
         ui.player @players[0], true
-        @actions[0] = @players[0].play @cards[-1], possible_actions
+        @actions[0] = @players[0].play possible_actions
         @ui.adjust_track  @board.compute_victory_points
 
         ui.continue? @players[1].instance_of? FLNBot
         ui.player @players[1], false
-        @actions[1] = @players[1].play possible_actions @cards[-1], @actions[0]
+        @actions[1] = @players[1].play possible_actions @actions[0]
         @ui.adjust_track @board.compute_victory_points
 
         @cards.shift if @cards.length > 2
