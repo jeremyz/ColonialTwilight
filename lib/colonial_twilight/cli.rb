@@ -134,7 +134,7 @@ module ColonialTwilight
       end
       print "\u21b5  " # carriage return
       gets
-      print "\033[1A\033\k\u2713\n\n" # up, erase line, check
+      print "\033[1A\033[K\u2713\n\n" # up, erase line, check
     end
 
     # def show_control selected, control
