@@ -426,7 +426,7 @@ module ColonialTwilight
 
       if @debug
         puts "=> Rally done :\n\texpended resources : #{@expended_resources} #{}"
-        puts "\tselected spaces :: " + @selected_spaces.collect(){|s| s.is_a?(Symbol) ? s.to_s : s.name}.join(' :: ')
+        debug_selected_spaces
       end
 
       subvert if may_conduct_special_activity? :subvert
@@ -598,8 +598,8 @@ module ColonialTwilight
       if OPERATIONS.include? action
         operation_done action
         raise "already selected #{selected.name}" if @selected_spaces.include? selected
-        @selected_spaces << selected #unless @selected_spaces.include? selected
-        puts 'selected spaces :: ' + @selected_spaces.collect(){|s| s.is_a?(Symbol) ? s.to_s : s.name}.join(' :: ') if @debug
+        @selected_spaces << selected
+        debug_selected_spaces
       elsif SPECIAL_ACTIVITIES.include? action
         special_activity_done action
         @selected_spaces << selected if action == :ambush

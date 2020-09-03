@@ -90,6 +90,10 @@ module ColonialTwilight
       @special_activity_count += 1
     end
 
+    def debug_selected_spaces
+      puts "\tselected spaces :: " + @selected_spaces.collect(){|s| s.is_a?(Symbol) ? s.to_s : s.name}.join(' :: ') if @debug
+    end
+
   end
 
 end
