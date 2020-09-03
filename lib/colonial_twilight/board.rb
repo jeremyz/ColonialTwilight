@@ -137,6 +137,14 @@ module ColonialTwilight
 
   end
 
+  class Box < Forces
+    attr_reader :name
+    def initialize sym
+      super sym
+      @name = sym
+    end
+  end
+
   class Sector
 
     MOUNTAIN=1
@@ -265,9 +273,9 @@ module ColonialTwilight
       @names = []
       @spaces_h = {}
       @capabilities = []
-      @available = Forces.new :available
-      @casualties = Forces.new :casualties
-      @out_of_play = Forces.new :out_of_play
+      @available = Box.new :available
+      @casualties = Box.new :casualties
+      @out_of_play = Box.new :out_of_play
       feed
       @spaces = @spaces_h.values
       @sectors = @spaces.select { |s| not s.country? }
@@ -283,10 +291,12 @@ module ColonialTwilight
     end
 
     def transfer n, what, from, to, towhat=nil
-      from = (from.is_a?(Sector) ? from : get_local(from) )
-      to = (to.is_a?(Sector) ? to : get_local(to) )
+      towhat = what if towhat.nil?
+      from = get_var from if from.is_a? Symbol
+      to = get_var to if to.is_a? Symbol
       from.add what, -n
       to.add towhat, n
+      { :n => n, :what => what, :from=>from, :to => to, :towhat=> towhat }
     end
 
     def terror where, n
@@ -394,7 +404,7 @@ module ColonialTwilight
 
     private
 
-    def get_local sym
+    def get_var sym
       case sym
       when :available; return @available
       when :casualties; return @casualties

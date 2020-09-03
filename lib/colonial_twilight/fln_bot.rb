@@ -576,11 +576,9 @@ module ColonialTwilight
     end
 
     def transfer h, n, what, from, to, towhat=nil
-      towhat = what if towhat.nil?
       h[:controls][from] ||= from.control unless from.is_a? Symbol
       h[:controls][to] ||= to.control unless to.is_a? Symbol
-      @board.transfer n, what, from, to, towhat
-      h[:transfers] << { :n => n, :what => what, :from=>from, :to => to, :towhat=> towhat }
+      h[:transfers] << @board.transfer( n, what, from, to, towhat)
       # puts h[:transfers][-1] if @debug
     end
 
@@ -595,15 +593,16 @@ module ColonialTwilight
     IGNORE = [:pass, :event, :agitate].freeze
 
     def apply_action h
+      selected = h[:selected]
       action = h[:action]
       if OPERATIONS.include? action
         operation_done action
-        raise "already selected #{h[:selected].name}" if @selected_spaces.include? h[:selected]
-        @selected_spaces << h[:selected] #unless @selected_spaces.include? h[:selected]
+        raise "already selected #{selected.name}" if @selected_spaces.include? selected
+        @selected_spaces << selected #unless @selected_spaces.include? selected
         puts 'selected spaces :: ' + @selected_spaces.collect(){|s| s.is_a?(Symbol) ? s.to_s : s.name}.join(' :: ') if @debug
       elsif SPECIAL_ACTIVITIES.include? action
         special_activity_done action
-        @selected_spaces << h[:selected] if action == :ambush
+        @selected_spaces << selected if action == :ambush
       elsif not IGNORE.include? action
         raise "apply unknown action #{h[:action]}"
       else
@@ -613,13 +612,7 @@ module ColonialTwilight
       @board.shift_resources :fln, -cost
       @expended_resources += cost unless h.has_key? :already_expended # _reserve_agitate
       h[:resources] = {:cost=>cost, :value=>@board.fln_resources}
-      h[:controls].each do |k,v|
-        if v != k.control
-          h[:controls][k] = [v, k.control]
-        else
-          h[:controls].delete k
-        end
-      end
+      h[:controls] = h[:controls].inject({}){|ch,(k,v)| ch[k] = [v, k.control] if v != k.control; ch}
       @ui.show_player_action self, h
       true
     end

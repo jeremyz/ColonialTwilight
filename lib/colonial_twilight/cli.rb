@@ -7,6 +7,20 @@ require 'colonial_twilight/game'
 
 module ColonialTwilight
 
+  class Sector
+    def cli
+      name.magenta
+    end
+    def towhat?; true end
+  end
+
+  class Box
+    def cli
+      Cli::BOXES[name].cyan
+    end
+    def towhat?; false end
+  end
+
   class Cli
 
     FRANCE_TRACK=[' A ',' B ',' C ',' D ',' E ',' F '].map {|e| e.white.on_blue}.freeze
@@ -139,17 +153,17 @@ module ColonialTwilight
 
     # def show_control selected, control
     #     s = "\t   => shift #{'control'.cyan} to #{CONTROL[control]}"
-    #     s += " in #{selected.name.magenta}" if @options.verbose
+    #     s += " in #{selected.magenta}" if @options.verbose
     #     puts s
     # end
 
     def show_controls selected, controls
       controls.each do |k,v|
-        puts "\t   => shift #{'control'.cyan} to #{CONTROL[v[1]]} in #{k.name.magenta}" if k != selected
+        puts "\t   => shift #{'control'.cyan} to #{CONTROL[v[1]]} in #{k.cli}" if k != selected
       end
       if controls.has_key? selected
         s = "\t   => shift #{'control'.cyan} to #{CONTROL[controls[selected][1]]}"
-        s += " in #{selected.name.magenta}" if @options.verbose
+        s += " in #{selected.cli}" if @options.verbose
         puts s
       end
     end
@@ -163,13 +177,13 @@ module ColonialTwilight
         puts "\t#{'PASS'.red} increase #{'resources'.yellow} by #{v} to #{rcs[:value].to_s.red}"
       else
         action = action.to_s.capitalize
-        sym = selected.is_a?(Symbol)
-        where = sym ? "on #{BOXES[selected]}" : "in #{selected.name.magenta}"
+        sym = selected.is_a?(Symbol)  # FIXME Symbol => France track or Border track
+        where = sym ? "on #{BOXES[selected]}" : "in #{selected.cli}"
         cost = (incr == 0 ? nil : "#{incr < 0 ? 'increase' : 'decrease'} #{'resources'.yellow} by #{v} to #{rcs[:value].to_s.red}")
         if @options.verbose
           puts "\t#{faction} executes a #{action.yellow} Operation #{where}"
           puts "\t#{cost}" unless cost.nil?
-          puts "\tin #{selected.name.magenta} :" unless sym
+          puts "\tin #{selected.cli} :" unless sym
         else
           s = "\t#{action.black.on_white} #{where} "
           s += cost unless cost.nil?
@@ -185,17 +199,15 @@ module ColonialTwilight
         what, towhat = tr[:what], tr[:towhat]
         if from == to
           s = "\t   => flip #{n} #{FORCES[what]} to #{FORCES[towhat]}"
-          s += " in #{selected.name.cyan}" if @options.verbose
+          s += " in #{selected.cyan}" if @options.verbose
           puts s
         else
-          froms = (from.is_a?(Sector) ? from.name.magenta : BOXES[from] )
-          tos = (to.is_a?(Sector) ? to.name.magenta : BOXES[to] )
           s = "\t   => transfer #{n} #{FORCES[what]}"
-          s += " from #{froms}" if @options.verbose or from != selected
-          s += " to #{tos}" if @options.verbose or to != selected
-          s += " as #{FORCES[towhat]}" if @options.verbose or (what != towhat and to.is_a?(Sector))
-          # puts "\t   => shift #{'control'.cyan} to #{CONTROL[controls[from]]} in #{froms}" if from != selected and controls.has_key?(from)
-          # puts "\t   => shift #{'control'.cyan} to #{CONTROL[controls[to]]} in #{tos}" if to != selected and controls.has_key?(to)
+          s += " from #{from.cli}" if @options.verbose or from != selected
+          s += " to #{to.cli}" if @options.verbose or to != selected
+          s += " as #{FORCES[towhat]}" if @options.verbose or (what != towhat and to.towhat?)
+          # puts "\t   => shift #{'control'.cyan} to #{CONTROL[controls[from]]} in #{from.cli}" if from != selected and controls.has_key?(from)
+          # puts "\t   => shift #{'control'.cyan} to #{CONTROL[controls[to]]} in #{to.cli}" if to != selected and controls.has_key?(to)
           puts s
         end
       end
@@ -208,11 +220,11 @@ module ColonialTwilight
         when :terror
           act = (n > 0 ? 'add' : 'remove').red
           s = "\t   => #{act} #{n.to_s.cyan} #{'Terror'.yellow} markers"
-          s += " in #{selected.name.magenta} from #{from.to_s.cyan} to #{to.to_s.red}" if @options.verbose
+          s += " in #{selected.cli} from #{from.to_s.cyan} to #{to.to_s.red}" if @options.verbose
           puts s
         when :alignment
           if @options.verbose
-            puts "\t   => shift #{selected.name.magenta} #{n.to_s.cyan} times towards #{ALIGNMENT[towards]} from #{ALIGNMENT[from]} to #{ALIGNMENT[to]}"
+            puts "\t   => shift #{selected.cli} #{n.to_s.cyan} times towards #{ALIGNMENT[towards]} from #{ALIGNMENT[from]} to #{ALIGNMENT[to]}"
           else
             puts "\t   => shift #{'Alignment'.yellow} onto #{ALIGNMENT[to]}"
           end
