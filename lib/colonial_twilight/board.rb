@@ -137,6 +137,24 @@ module ColonialTwilight
 
   end
 
+  class Track
+    attr_accessor :v
+    def initialize max
+      @v = 0
+      @max = max
+    end
+    def shift v
+      w = @v + v
+      return false if (w < 0 or w > @max)
+      @v = w
+      true
+    end
+    def clamp v
+      @v = (@v + v).clamp(0, @max)
+    end
+    def data; @v end
+  end
+
   class Box < Forces
     attr_reader :name
     def initialize sym
@@ -260,34 +278,38 @@ module ColonialTwilight
 
     FRANCE_TRACK=['A','B','C','D','E','F'].freeze
 
-    attr_accessor :commitment
-    attr_accessor :gov_resources, :fln_resources
-    attr_accessor :support_commitment,:opposition_bases
-    attr_accessor :resettled_sectors
-    attr_accessor :france_track, :border_zone_track
+    attr_reader :spaces_h, :spaces, :sectors, :cities, :countries
 
-    attr_reader :spaces, :sectors, :cities, :countries
-    attr_reader :spaces_h
+    [:commitment, :gov_resources, :fln_resources, :resettled_sectors, :france_track, :border_zone_track].each do |sym|
+      define_method sym do instance_variable_get("@#{sym}").v end
+    end
+
+    [:gov_bases, :french_troops, :french_police, :algerian_troops, :algerian_police, :fln_bases, :fln_underground].each do |sym|
+      define_method "available_#{sym}" do @available.send(sym) end
+      # define_method "casualties_#{sym}" do @casualties.send(sym) end
+      # define_method "out_of_play_#{sym}" do @out_of_play.send(sym) end
+    end
 
     def initialize
       @names = []
       @spaces_h = {}
       @capabilities = []
+      @resettled_sectors = 0
       @available = Box.new :available
       @casualties = Box.new :casualties
       @out_of_play = Box.new :out_of_play
+      @fln_resources = Track.new 50
+      @gov_resources = Track.new 50
+      @commitment = Track.new 50
+      @support_commitment = Track.new 50
+      @opposition_bases = Track.new 50
+      @france_track = Track.new 5
+      @border_zone_track = Track.new 4
       feed
       @spaces = @spaces_h.values
       @sectors = @spaces.select { |s| not s.country? }
       @cities = @spaces.select { |s| s.city? }
       @countries = @spaces.select { |s| s.country? }
-    end
-
-    [:gov_bases, :french_troops, :french_police, :algerian_troops, :algerian_police,
-     :fln_bases, :fln_underground].each do |sym|
-      define_method "available_#{sym}" do @available.send(sym) end
-      # define_method "casualties_#{sym}" do @casualties.send(sym) end
-      # define_method "out_of_play_#{sym}" do @out_of_play.send(sym) end
     end
 
     def transfer n, what, from, to, towhat=nil
@@ -309,32 +331,16 @@ module ColonialTwilight
       end
     end
 
-    def shift_commitment dc
-        @commitment = (@commitment + dc).clamp(0, 50)
-    end
-
-    def shift_resources who, dr
-      if who == :fln
-        @fln_resources = (@fln_resources + dr).clamp(0, 50)
-      elsif who == :gov
-        @gov_resources = (@gov_resources + dr).clamp(0, 50)
+    def shift_track what, dt
+      case what
+      when :fln_resources; @fln_resources.clamp dt
+      when :gov_resources; @gov_resources.clamp dt
+      when :commitment; @commitment.clamp dt
+      when :france_track; @france_track.shift dt
+      when :border_zone_track; @border_zone_track.shift dt
       else
-        raise "shift_resources : unknown who : #{who}"
+        raise "shift_track: '#{what}'unknown"
       end
-    end
-
-    def shift_france_track dt
-      ft = @france_track + dt
-      return false if (ft < 0 or ft > 5)
-      @france_track = ft
-      true
-    end
-
-    def shift_border_zone_track dt
-      ft = @shift_border_zone_track + dt
-      return false if (ft < 0 or ft > 4)
-      @border_zone_track = ft
-      true
     end
 
     def has where=:spaces, &block
@@ -356,28 +362,25 @@ module ColonialTwilight
     end
 
     def compute_victory_points
-      values = [@support_commitment, @opposition_bases]
-      @opposition_bases = 0
-      @support_commitment = @commitment
+      values = [@support_commitment.v, @opposition_bases.v]
+      @opposition_bases.v = 0
+      @support_commitment.v =  @commitment.v
       @spaces_h.each do |n,s|
-        @opposition_bases += s.fln_bases
-        @opposition_bases += s.pop if s.alignment == :oppose
-        @support_commitment += s.pop if s.alignment == :support
+        @opposition_bases.clamp s.fln_bases
+        @opposition_bases.clamp s.pop if s.alignment == :oppose
+        @support_commitment.clamp s.pop if s.alignment == :support
       end
-      @support_commitment = @support_commitment.clamp(0, 50)
-      @opposition_bases = @opposition_bases.clamp(0, 50)
-      values << @support_commitment << @opposition_bases
+      values << @support_commitment.v << @opposition_bases.v
     end
 
     def data
       h = { }
-      [:commitment, :gov_resources, :fln_resources, :support_commitment, :opposition_bases, :resettled_sectors, :france_track, :border_zone_track].each do |sym|
-        h[sym] = send(sym)
+      [:gov_resources, :fln_resources, :commitment, :support_commitment, :opposition_bases,
+       :france_track, :border_zone_track, :available, :casualties, :out_of_play].each do |sym|
+        h[sym] = instance_variable_get("@#{sym}").data
       end
+      h[:resettled_sectors] = @resettled_sectors
       h[:capabilities] = @capabilities
-      h[:available] = @available.data
-      h[:casualties] = @casualties.data
-      h[:out_of_play] = @out_of_play.data
       h[:spaces] = @spaces_h.inject([])do |a,(k,s)| a << s.data end
       h
     end
@@ -507,12 +510,12 @@ module ColonialTwilight
     end
 
     def short
-      @commitment = 15
-      @fln_resources = 15
-      @gov_resources = 20
       @resettled_sectors = 0
-      @france_track = 4
-      @border_zone_track = 3
+      @commitment.v = 15
+      @fln_resources.v = 15
+      @gov_resources.v = 20
+      @france_track.v = 4
+      @border_zone_track.v = 3
       @out_of_play.fln_underground = 5
       @available.gov_bases = 2
       @available.french_police = 4
@@ -521,7 +524,7 @@ module ColonialTwilight
       resettle 'Setif'
       resettle 'Tlemcen'
       resettle 'Bordj Bou Arreridj'
-      raise "resettled sectors not counted" if resettled_sectors != 3
+      raise "resettled sectors not counted" if @resettled_sectors != 3
       set_sector  0, {:ap=>1, :fln=>1}, :oppose
       set_sector  2, {:fp=>1}
       set_sector  4, {:ap=>1, :fln=>1}, :oppose
@@ -548,8 +551,8 @@ module ColonialTwilight
       set_sector 28, {:fln=>4, :flnb=>2}
       set_sector 29, {:fln=>5, :flnb=>2}
       compute_victory_points
-      raise "wrong opposition + bases" if @opposition_bases != 19
-      raise "wrong support + commitment" if @support_commitment != 22
+      raise "wrong opposition + bases" if @opposition_bases.v != 19
+      raise "wrong support + commitment" if @support_commitment.v != 22
     end
 
     def medium

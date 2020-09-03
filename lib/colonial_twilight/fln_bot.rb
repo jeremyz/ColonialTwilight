@@ -557,7 +557,7 @@ module ColonialTwilight
 
     def _shift_france_track
       h = get_action :rally, 1, :france_track, false
-      return false if not @board.shift_france_track 1
+      return false if not @board.shift_track :france_track, 1
       puts '  => shift_france_track' if @debug
       h[:france_track] = @board.france_track
       apply_action h
@@ -609,7 +609,7 @@ module ColonialTwilight
         # :pass, :event, :agitate
       end
       cost = h[:fln_resources]
-      @board.shift_resources :fln, -cost
+      @board.shift_track :fln_resources, -cost
       @expended_resources += cost unless h.has_key? :already_expended # _reserve_agitate
       h[:resources] = {:cost=>cost, :value=>@board.fln_resources}
       h[:controls] = h[:controls].inject({}){|ch,(k,v)| ch[k] = [v, k.control] if v != k.control; ch}
