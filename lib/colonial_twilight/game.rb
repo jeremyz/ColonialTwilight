@@ -1,6 +1,8 @@
 #! /usr/bin/env ruby
 # -*- coding: UTF-8 -*-
 
+require 'json'
+
 require 'colonial_twilight/board'
 require 'colonial_twilight/cards'
 require 'colonial_twilight/player'
@@ -64,7 +66,7 @@ module ColonialTwilight
       @scenario = s
       @board.load [:short, :medium, :long][s]
       @max_card = 71
-      @turn = 1
+      @turn = 0
       @cards = []
       @actions = []
       @players = [FLNBot.new(self, :FLN), GOVPlayer.new(self, :GOV)]
@@ -74,28 +76,30 @@ module ColonialTwilight
     def current_card; @cards[-1] end
 
     def play
+      save_board 0
       while true
+        @turn += 1
         ui.turn_start @turn, *@players
         c = ui.pull_card @max_card
         c = 1 # FIXME
         @cards << @deck.pull(c)
         ui.show_card @cards[-1]
+        File.open("actions-#{@turn}.json",'w') { |f| f << JSON.generate([]) }
 
         ui.continue? @players[0].instance_of? FLNBot
         ui.player @players[0], true
         @actions[0] = @players[0].play possible_actions
         @ui.adjust_track  @board.compute_victory_points
+        save_board 0
 
         ui.continue? @players[1].instance_of? FLNBot
         ui.player @players[1], false
         @actions[1] = @players[1].play possible_actions @actions[0]
         @ui.adjust_track @board.compute_victory_points
+        save_board 1
 
         @cards.shift if @cards.length > 2
-        @turn += 1
-        if eligibility_swap?
-          @players[0], @players[1] = @players[1], @players[0]
-        end
+        @players[0], @players[1] = @players[1], @players[0] if eligibility_swap?
         @actions.clear
       end
     end
@@ -104,6 +108,33 @@ module ColonialTwilight
       Game.swap_actions.include? @actions[0]
     end
 
+    def save_board phase
+      json = JSON.generate @board.data
+      File.open("turn-#{@turn}-#{phase}.json",'w') { |f| f << json }
+    end
+
+    def action_done player, action
+      data = nil
+      File.open("actions-#{@turn}.json",'r') { |f| data = JSON.load f }
+      data << action
+
+      json = JSON.generate data
+      File.open("actions-#{@turn}.json",'w') { |f| f << json }
+      @ui.show_player_action player, action
+    end
+
+  end
+
+  class Sector
+    def to_json *args
+      name.to_json args
+    end
+  end
+
+  class Box
+    def to_json *args
+      name.to_json args
+    end
   end
 
 end

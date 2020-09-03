@@ -1,8 +1,6 @@
 #! /usr/bin/env ruby
 # -*- coding: UTF-8 -*-
 
-require 'json'
-
 module ColonialTwilight
 
   class Forces
@@ -43,7 +41,8 @@ module ColonialTwilight
       end unless rm.nil?
     end
 
-    def to_s
+    def to_s; inspect end
+    def inspect
       "
       #{gov_bases} GOV bases
         #{french_troops} french troops
@@ -187,7 +186,8 @@ module ColonialTwilight
       @resettled = false
     end
 
-    def to_s
+    def to_s; @name end
+    def inspect
       "#@descr #@terrain
       control    : #{@forces.control}
       alignment  : #@alignment
@@ -383,17 +383,6 @@ module ColonialTwilight
       h[:capabilities] = @capabilities
       h[:spaces] = @spaces_h.inject([])do |a,(k,s)| a << s.data end
       h
-    end
-
-    def to_json
-      # JSON.pretty_generate(data)
-      JSON.generate(data)
-    end
-
-    def save
-      File.open('save.json','w') do |f|
-        f.write(JSON.generate(data))
-      end
     end
 
     def load scenario

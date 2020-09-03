@@ -10,7 +10,6 @@ module ColonialTwilight
     def initialize game, faction
       @game = game
       @board = game.board
-      @ui = game.ui
       @faction = faction
       @debug = game.options.debug_bot
       @possible_actions = nil

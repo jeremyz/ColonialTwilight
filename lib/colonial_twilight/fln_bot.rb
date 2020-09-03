@@ -613,7 +613,7 @@ module ColonialTwilight
       @expended_resources += cost unless h.has_key? :already_expended # _reserve_agitate
       h[:resources] = {:cost=>cost, :value=>@board.fln_resources}
       h[:controls] = h[:controls].inject({}){|ch,(k,v)| ch[k] = [v, k.control] if v != k.control; ch}
-      @ui.show_player_action self, h
+      @game.action_done self, h
       true
     end
 
