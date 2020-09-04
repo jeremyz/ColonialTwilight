@@ -73,7 +73,7 @@ module ColonialTwilight
       ret << chose('Choose a ruleset', @game.rules) { |s| a = s.split('-'); a[0] = a[0].yellow; a.join('-') }
       exit(0) if ret[-1] < 0
       @game.start self, *ret
-      # @game.start self, 0, 0
+      @game.play
     end
 
     def logo

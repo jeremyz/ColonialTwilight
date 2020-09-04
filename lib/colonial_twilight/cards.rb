@@ -49,10 +49,11 @@ module ColonialTwilight
     attr_reader :cards
     def initialize
       @cards = {}
+      add_card 0, 'None', nil, nil
       add_card 1, 'Quadrillage', 0, CardAction.new('Place up to all French Police in Available in up to 3 spaces', {:what=>:french_police,:from=>:available})
     end
 
-    def pull n; @cards[n] end
+    def pull n; @cards[n > 0 ? 1 : 0] end # FIXME
 
     private
 
