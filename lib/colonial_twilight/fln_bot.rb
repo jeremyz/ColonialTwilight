@@ -285,28 +285,11 @@ module ColonialTwilight
       rcs_max = (@board.fln_resources <= 8 ? @board.fln_resources : @board.fln_resources * 2 / 3)
       stop_cond = -> { @expended_resources == rcs_max or not may_continue? }
 
-      # FIXME
-      # @board.spaces_h['Tlemcen'].add :fln_underground, -1
-      # @board.spaces_h['Tlemcen'].add :fln_base, 1
-      # @board.spaces_h['Mascara'].add :fln_underground, 2
-      # @board.spaces_h['Mascara'].add :fln_active, 2
-      # @board.spaces_h['Saida'].add :fln_base
-      # @board.spaces_h['Saida'].add :fln_underground, 1
-      # @board.spaces_h['Saida'].add :fln_active, 2
-      # @board.spaces_h['Sidi Bel Abbes'].add :algerian_police, 1
-      @board.spaces_h['Bordj Bou Arreridj'].add :fln_base, 1
-      @board.spaces_h['Oum El Bouaghi'].add :fln_base, 1
-      # @board.spaces_h['Biskra'].add :fln_base, 1
-      @board.spaces_h['Tebessa'].add :fln_active, 1
-      @board.spaces_h['Negrine'].add :fln_active, 1
-      @board.spaces_h['Negrine'].add :fln_underground, 1
-      #
       spaces = @board.search {|s| not s.fln_bases_0? and s.fln_underground == 0 }
       puts "spaces :: " + spaces.collect(){|s| s.is_a?(Symbol) ? s.to_s : s.name}.join(' :: ')
-      selected = spaces[0]
-      selected = @board.spaces[11]
-      puts "DEST : #{selected.name}"
-      d = _paths(selected, {:fln_underground=>1}) {|h| h[:fln_underground] > 0 }
+      spaces.each do |space|
+        d = _paths(space, {:fln_underground=>1}) {|h| h[:fln_underground] > 0 }
+      end
 
       puts "FIXME : march is not implemented yet"
       exit 1
@@ -357,10 +340,9 @@ module ColonialTwilight
 
     def _paths dst, want, &cond
       ws = dst.adjacents.map {|s| @board.spaces[s].wilaya }.uniq!       # adjacent Wilayas allowed
-      puts ws.inspect
-      spaces = @board.search{|s| s != dst and ws.include? s.wilaya }    # in tree spaces
-      puts spaces.collect{|s| s.name }.join(' :: ')
-      tree = build_tree dst, spaces, want
+      spaces = @board.search{|s| s != dst and ws.include? s.wilaya }    # corresponding spaces
+      puts "DST : #{dst}\nWilayas : #{ws.inspect}\n" + spaces.collect{|s| s.name }.join(' :: ') if @debug
+      tree = build_tree dst, ws, spaces, want
       tree.sort{|(x,a),(y,b)| a[:d]<=>b[:d]}.each{|k,v| puts "\t#{v[:d]} #{v[:fln][:max]}:#{v[:fln][:ok]} #{k.name} :: #{v[:adjs].map{|s| s.name}.join(' - ')}" }
     end
 
@@ -651,7 +633,7 @@ module ColonialTwilight
       ( (to.support? or from.country?) and (flns + to.gov_cubes + (from.country? ? @board.border_zone_track : 0)) > 3 )
     end
 
-    def build_tree dst, spaces, want
+    def build_tree dst, ws, spaces, want
       tree = ([dst] + spaces).inject({}) do |h,s|
         # filter out adjacents : dst OR adjacent to dst OR same wilaya
         a = s.adjacents.map{|n| @board.spaces[n]}.select{|a| a == dst or (spaces.include?(a) and (s.wilaya == a.wilaya or s == dst))}
@@ -671,6 +653,15 @@ module ColonialTwilight
             q << a
           end
         end
+      end
+      # filter out wilayas that have no eligible FLN
+      ws.each do |w|
+        h = tree.select{|s,h| s != dst and s.wilaya == w}
+        next if h.inject(false) {|b,(s,h)| b||h[:fln][:ok]}
+        h.each {|s,v|
+          tree.delete s
+          tree[dst][:adjs].delete s
+        }
       end
       tree
     end
