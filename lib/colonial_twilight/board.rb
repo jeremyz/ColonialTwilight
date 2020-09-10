@@ -453,7 +453,7 @@ module ColonialTwilight
       add Sector, 'Ain Oussera', 'VI', 2, 1, mountain           # 27
       add Country, 'Moroco', 0                                  # 28
       add Country, 'Tunisia', 1                                 # 29
-      adjacents  0, 1, 2, 3, 7, 8, 11, 19
+      adjacents  0, 1, 2, 3, 7, 8, 11, 26
       adjacents  1, 0, 2, 3, 5
       adjacents  2, 0, 1, 5, 25, 26, 29
       adjacents  3, 0, 1, 4, 5, 8, 9
@@ -482,7 +482,7 @@ module ColonialTwilight
       adjacents 26, 0, 2, 11, 14, 25, 27
       adjacents 27, 14, 15, 23, 24, 25, 26
       adjacents 28, 17, 18, 24
-      adjacents 29, 2, 4, 5, 8
+      adjacents 29, 2, 4, 5, 9
     end
 
     def set_sector i, h, align=nil
