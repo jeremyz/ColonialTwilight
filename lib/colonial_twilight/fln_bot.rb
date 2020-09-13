@@ -338,12 +338,13 @@ module ColonialTwilight
       return conducted_action
     end
 
-    def _paths dst, want, &cond
+    def _paths dst, want
       ws = dst.adjacents.map {|s| @board.spaces[s].wilaya }.uniq!       # adjacent Wilayas allowed
       spaces = @board.search{|s| s != dst and ws.include? s.wilaya }    # corresponding spaces
       puts "DST : #{dst}\nWilayas : #{ws.inspect}\n" + spaces.collect{|s| s.name }.join(' :: ') if @debug
-      tree = build_tree dst, ws, spaces, want
+      paths, tree = build_paths dst, ws, spaces, want
       tree.sort{|(x,a),(y,b)| a[:d]<=>b[:d]}.each{|k,v| puts "\t#{v[:d]} #{v[:fln][:max]}:#{v[:fln][:ok]} #{k.name} :: #{v[:adjs].map{|s| s.name}.join(' - ')}" }
+      paths.each{|p| puts p.collect{|s| s.name}.join ' -> '}
     end
 
     ##### RALLY OPERATION #####
@@ -633,7 +634,7 @@ module ColonialTwilight
       ( (to.support? or from.country?) and (flns + to.gov_cubes + (from.country? ? @board.border_zone_track : 0)) > 3 )
     end
 
-    def build_tree dst, ws, spaces, want
+    def build_paths dst, ws, spaces, want
       tree = ([dst] + spaces).inject({}) do |h,s|
         # filter out adjacents : dst OR adjacent to dst OR same wilaya
         a = s.adjacents.map{|n| @board.spaces[n]}.select{|a| a == dst or (spaces.include?(a) and (s.wilaya == a.wilaya or s == dst))}
@@ -654,7 +655,11 @@ module ColonialTwilight
           end
         end
       end
-      # filter out wilayas that have no eligible FLN
+      # filter_out dst, ws, tree
+      build_shortest_paths tree
+    end
+
+    def filter_out dst, ws, tree
       ws.each do |w|
         h = tree.select{|s,h| s != dst and s.wilaya == w}
         next if h.inject(false) {|b,(s,h)| b||h[:fln][:ok]}
@@ -663,7 +668,24 @@ module ColonialTwilight
           tree[dst][:adjs].delete s
         }
       end
-      tree
+    end
+
+    def build_shortest_paths tree
+      paths = []
+      def dfs s, tree, paths, path
+        l = tree[s][:adjs].sort{|a,b| tree[a][:d] <=> tree[b][:d]}
+        d = tree[l[0]][:d]
+        if d == 0
+          paths << (path << l[0])
+        else
+          l.each do |a|
+            break if tree[a][:d] > d
+            dfs a, tree, paths, path.clone << a
+          end
+        end
+      end
+      tree.select{|k,v| v[:fln][:ok]}.each{|k,v| dfs k, tree, paths, [k] }
+      [paths, tree]
     end
 
     def can_march_from s, want, with={}
