@@ -1,85 +1,92 @@
 #! /usr/bin/env ruby
-# -*- coding: UTF-8 -*-
+# frozen_string_literal: true
 
+# this adds ascii colorization to String class
 class String
-
-  CLS="\033[0;0f\033\[2J".freeze
-
+  CLS = "\033[0;0f\033\[2J"
   @color_codes = {
-    :black   => 0, :light_black    => 60,
-    :red     => 1, :light_red      => 61,
-    :green   => 2, :light_green    => 62,
-    :yellow  => 3, :light_yellow   => 63,
-    :blue    => 4, :light_blue     => 64,
-    :magenta => 5, :light_magenta  => 65,
-    :cyan    => 6, :light_cyan     => 66,
-    :white   => 7, :light_white    => 67,
-    :default => 9
+    black: 0,   light_black: 60,
+    red: 1,     light_red: 61,
+    green: 2,   light_green: 62,
+    yellow: 3,  light_yellow: 63,
+    blue: 4,    light_blue: 64,
+    magenta: 5, light_magenta: 65,
+    cyan: 6,    light_cyan: 66,
+    white: 7,   light_white: 67,
+    default: 9
   }
-  @color_codes.default=9
+  @color_codes.default = 9
   @color_modes = {
-    :default   => 0, # Turn off all attributes
-    :bold      => 1, # Set bold mode
-    :italic    => 3, # Set italic mode
-    :underline => 4, # Set underline mode
-    :blink     => 5, # Set blink mode
-    :swap      => 7, # Exchange foreground and background colors
-    :hide      => 8  # Hide text (foreground color would be the same as background)
+    default: 0, # Turn off all attributes
+    bold: 1, # Set bold mode
+    italic: 3, # Set italic mode
+    underline: 4, # Set underline mode
+    blink: 5, # Set blink mode
+    swap: 7, # Exchange foreground and background colors
+    hide: 8  # Hide text (foreground color would be the same as background)
   }
-  @color_modes.default=0
-  @syms = [:fg, :bg, :mode]
+  @color_modes.default = 0
+  @syms = %i[fg bg mode]
 
   class << self
     attr_reader :color_codes, :color_modes, :syms
-    def create_methods
-      color_codes.keys.each do |cc|
-        next if cc == :default
-        define_method cc do colorize(:fg=>cc) end
-        define_method "on_#{cc}" do colorize(:bg=>cc) end
-      end
-      color_modes.keys.each do |cc|
-        next if cc == :default
-        define_method cc do colorize(:mode=>cc) end
-      end
 
+    def create_methods
+      color_codes.each_key do |cc|
+        next if cc == :default
+
+        define_method(cc) { colorize(fg: cc) }
+        define_method("on_#{cc}") { colorize(bg: cc) }
+      end
+      color_modes.each_key do |cc|
+        next if cc == :default
+
+        define_method(cc) { colorize(mode: cc) }
+      end
     end
   end
   create_methods
 
-  START="\033[".freeze
-  RESET="\033[0m".freeze
-  START_RE=/^\033\[([0-9;]+)m/
-  RESET_RE=/(?<!^)\033\[0m(?!$)/
+  def colorize(opts)
+    # code = compile_code(opts)
+    code = opts.each_with_object([]) { |(k, v), a| a << resolve(k, v) if self.class.syms.include? k }.join(';')
+    return self if code.empty?
 
-  def colorize h
-    code = h.inject([]) { |a,(k,v)| a<<resolve(k,v) if self.class.syms.include? k; a }.join(';')
-    return code if code.empty?
-    s = (
-      if self =~ START_RE # merge with existing escape sequence
-        prev = /(?<!^)\033\[#{$1}m(?!$)/
-        code = START + $1 + ';' + code + 'm'
-        self.sub(START_RE, code)
-      else
-        prev = RESET_RE
-        code = START + code + 'm'
-        code + self
-      end
-    )
-    s.gsub!(prev, code)
-    s+= RESET unless s[-4..] == RESET
-    s
+    apply_code(code)
   end
 
   private
 
-  def resolve k, v
-    return self.class.color_codes[v] + 30 if k == :fg
-    return self.class.color_codes[v] + 40 if k == :bg
-    return self.class.color_modes[v] if k == :mode
+  RESET = "\033[0m"
+  START_CODE = /^\033\[([0-9;]+)m/.freeze
+  # negative lookbehind : (?<! ) + ^ => is not at the start of the line
+  # negative lookahead : (?! ) + $ => is not at the end of the line
+  MIDDLE_RESET = /(?<!^)\033\[0m(?!$)/.freeze
+
+  def apply_code(code)
+    # prefix with ascii code
+    # replace all not ending reset with ascii code
+    if self =~ START_CODE
+      prev_start_code = ::Regexp.last_match(1)
+      code = "\033[#{prev_start_code};#{code}m"
+      s = sub(START_CODE, code).gsub(/(?<!^)\033\[#{prev_start_code}m(?!$)/, code)
+    else
+      code = "\033[#{code}m"
+      s = (code + self).gsub(MIDDLE_RESET, code)
+    end
+    # add terminal reset if needed
+    (s[-4..] == RESET ? s : s + RESET)
   end
 
+  def resolve(key, var)
+    return self.class.color_codes[var] + 30 if key == :fg
+    return self.class.color_codes[var] + 40 if key == :bg
+    return self.class.color_modes[var] if key == :mode
+  end
 end
 
 if $PROGRAM_NAME == __FILE__
-  puts "RED >> #{"blue".colorize(:fg=>:blue,:bg=>nil)} #{"green".colorize(:fg=>nil).on_green} << DER".white.on_red.underline
+  a = 'blue'.colorize(fg: :blue, bg: nil)
+  b = 'green'.colorize(fg: nil).on_green
+  puts "RED >> #{a} #{b} << DER".white.on_red.underline
 end
