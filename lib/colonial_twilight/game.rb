@@ -66,7 +66,7 @@ module ColonialTwilight
       @ui = ui
       @ruleset = rs
       @scenario = s
-      @board.load [:short, :medium, :long][s]
+      @board.load [:short, :medium, :full][s]
       @turn = 0
       @cards = {
         :current => @deck.pull(0),
