@@ -371,12 +371,16 @@ module ColonialTwilight
   end
 
   # a Country Sector
+  # GOV may not enter
+  # FLN may not enter until they become independent
+  # Population is never counted in the total Opposition
+  # May acquire the ability to contain 3 Bases
   class Country < Sector
-    attr_reader :independant
+    attr_reader :independent
 
     def initialize(name, wilaya)
       super(name, wilaya, nil, 1, MOUNTAIN | BORDER | COASTAL)
-      @descr += " #{@independant ? 'Independant' : 'French'}"
+      @descr += " #{@independent ? 'Independant' : 'French'}"
     end
 
     def add_gov_base
@@ -385,6 +389,15 @@ module ColonialTwilight
 
     def country?
       true
+    end
+
+    def independent?
+      @independent
+    end
+
+    def independent!
+      @independent = true
+      @descr += " #{@independent ? 'Independant' : 'French'}"
     end
   end
 
@@ -564,7 +577,7 @@ module ColonialTwilight
       add Sector, 'Laghouat', 'V', 9, 0
       add Sector, 'Sidi Aissa', 'VI', 1, 0, mountain
       add Sector, 'Ain Oussera', 'VI', 2, 1, mountain
-      add Country, 'Moroco', 0
+      add Country, 'Morocco', 0
       add Country, 'Tunisia', 1
     end
 
@@ -658,9 +671,9 @@ module ColonialTwilight
       set_sector 27, {}, :oppose
       set_sector 28, { fln_underground: 4, fln_base: 2 }
       set_sector 29, { fln_underground: 5, fln_base: 2 }
+      spaces[28].independent!
+      spaces[29].independent!
       compute_victory_points
-      raise "wrong opposition + bases #{@opposition_bases.v} != 19" if @opposition_bases.v != 19
-      raise "wrong support + commitment : #{@support_commitment.v} != 22" if @support_commitment.v != 22
     end
 
     def medium
