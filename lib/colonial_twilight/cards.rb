@@ -1,34 +1,59 @@
 #! /usr/bin/env ruby
-# -*- coding: UTF-8 -*-
+# frozen_string_literal: true
+
+# rubocop:disable Style/Documentation
 
 module ColonialTwilight
-
-  CARD_SINGLE=1
-  CARD_FLN_MARKED=2
-  CARD_ALWAYS_PLAY=4
+  CARD_SINGLE = 1
+  CARD_FLN_MARKED = 2
+  CARD_ALWAYS_PLAY = 4
 
   class Card
     attr_reader :num, :title
-    def initialize n, t, attr, a0=nil, a1=nil
-      @num = n
-      @title = t
+
+    def initialize(num, title, attr, act0 = nil, act1 = nil)
+      @num = num
+      @title = title
       @attributes = attr
-      @a0 = a0
-      @a1 = a1
+      @act0 = act0
+      @act1 = act1
     end
-    def dual?; @attributes & CARD_SINGLE == 0 end
-    def single?; @attributes & CARD_SINGLE == CARD_SINGLE end
-    def fln_marked?; @attributes & CARD_FLN_MARKED == CARD_FLN_MARKED end
-    def always_play?; @attributes & CARD_ALWAYS_PLAY == CARD_ALWAYS_PLAY end
-    def capability?; false end
-    def fln_effective?; false end
-    def fln_effectiveness; 0 end
+
+    def dual?
+      @attributes & CARD_SINGLE.zero?
+    end
+
+    def single?
+      @attributes & CARD_SINGLE == CARD_SINGLE
+    end
+
+    def fln_marked?
+      @attributes & CARD_FLN_MARKED == CARD_FLN_MARKED
+    end
+
+    def always_play?
+      @attributes & CARD_ALWAYS_PLAY == CARD_ALWAYS_PLAY
+    end
+
+    def capability?
+      false
+    end
+
+    def fln_effective?
+      false
+    end
+
+    def fln_effectiveness
+      0
+    end
+
     def fln_playable?
       # reduce GOV support or resources or commitment
       # shift France Track toward F
       # place FLN base or increase FLN resources
       false
     end
+
     def check
       # @attributes.each do |attr| raise "unknown attribute : #{attr}" if attr not in ATTRS end
       # puts single?
@@ -39,31 +64,32 @@ module ColonialTwilight
   end
 
   class CardAction
-    def initialize t, c
-      @txt = t
-      @condition=c
+    def initialize(txt, cond)
+      @txt = txt
+      @condition = cond
     end
   end
 
   class Deck
     attr_reader :cards
+
     def initialize
       @cards = {}
       add_card 0, 'None', nil, nil
-      add_card 1, 'Quadrillage', 0, CardAction.new('Place up to all French Police in Available in up to 3 spaces', {:what=>:french_police,:from=>:available})
+      add_card 1, 'Quadrillage', 0, CardAction.new('Place up to all French Police in Available in up to 3 spaces', { what: :french_police, from: :available })
     end
 
-    def pull n; @cards[n > 0 ? 1 : 0] end # FIXME
+    def pull(num)
+      @cards[num.positive? ? 1 : 0] # FIXME
+    end
 
     private
 
-    def add_card num, title, attrs, action
+    def add_card(num, title, attrs, _action)
       @cards[num] = Card.new num, title, attrs
       @cards[num].check
     end
-
   end
-
 end
 
  # 'Balky Conscripts'
