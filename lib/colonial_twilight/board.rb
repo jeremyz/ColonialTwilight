@@ -407,7 +407,8 @@ module ColonialTwilight
 
     attr_reader :spaces_h, :spaces, :sectors, :cities, :countries
 
-    %i[commitment gov_resources fln_resources resettled_sectors france_track border_zone_track].each do |sym|
+    %i[commitment gov_resources fln_resources resettled_sectors france_track border_zone_track
+      support_commitment opposition_bases].each do |sym|
       define_method(sym) { instance_variable_get("@#{sym}").v }
     end
 
