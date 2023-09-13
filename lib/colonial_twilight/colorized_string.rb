@@ -18,12 +18,13 @@ class String
   @color_codes.default = 9
   @color_modes = {
     default: 0, # Turn off all attributes
-    bold: 1, # Set bold mode
-    italic: 3, # Set italic mode
-    underline: 4, # Set underline mode
-    blink: 5, # Set blink mode
-    swap: 7, # Exchange foreground and background colors
-    hide: 8  # Hide text (foreground color would be the same as background)
+    bold: 1,
+    dim: 2,
+    italic: 3,
+    underline: 4,
+    blink: 5,
+    swap: 7,    # Exchange foreground and background colors
+    hide: 8     # Hide text (foreground color would be the same as background)
   }
   @color_modes.default = 0
   @syms = %i[fg bg mode]
@@ -68,9 +69,18 @@ class String
     # replace all not ending reset with ascii code
     if self =~ START_CODE
       prev_start_code = ::Regexp.last_match(1)
-      code = "\033[#{prev_start_code};#{code}m"
-      s = sub(START_CODE, code).gsub(/(?<!^)\033\[#{prev_start_code}m(?!$)/, code)
+      # puts "merge : #{code} to #{prev_start_code}"
+      # merge in front to preserve previous formating
+      mcode = "\033[#{code};#{prev_start_code}m"
+      # replace starting code and middle prev code with merged one
+      # replace middle reset code with new code
+      # the latter does not work on multiple pass like ' '.red.on_blue
+      # reset middle code will become red, nothin will be done with blue
+      s = sub(START_CODE, mcode)
+          .gsub(MIDDLE_RESET, "\033[#{code}m")
+          .gsub(/(?<!^)\033\[#{prev_start_code}m(?!$)/, mcode)
     else
+      # puts "add : #{code}"
       code = "\033[#{code}m"
       s = (code + self).gsub(MIDDLE_RESET, code)
     end
