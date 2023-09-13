@@ -23,7 +23,6 @@ def compute(board)
 end
 
 describe ColonialTwilight::Board do
-
   describe 'board setup' do
     board = ColonialTwilight::Board.new
     it 'has spaces' do expect(board.spaces.size).to eq(30) end
@@ -59,6 +58,23 @@ describe ColonialTwilight::Board do
     it 'total FLN undergound' do expect(vals[9]).to eq(17) end
     it 'total FLN bases' do expect(vals[10]).to eq(8) end
     it 'oppositon + bases' do expect(board.opposition_bases).to eq(19) end
-    it 'support + commitment' do expect(board.support_commitment).to eq (22) end
+    it 'support + commitment' do expect(board.support_commitment).to eq(22) end
+  end
+
+  describe 'has / count' do
+    board = ColonialTwilight::Board.new
+    board.load :short
+    it 'count fln_bases' do expect(board.count(&:fln_bases)).to eq(8) end
+    it 'count fln with bases' do expect(board.count { |s| s.fln_bases_0? ? 0 : s.guerrillas }).to eq(13) end
+    it 'count fln without bases' do expect(board.count { |s| s.fln_bases_0? ? s.guerrillas : 0 }).to eq(4) end
+    it 'count fln in country' do expect(board.count { |s| s.country? ? s.guerrillas : 0 }).to eq(9) end
+    it 'has fln 0 pop' do expect(board.search { |s| s.pop0? && s.fln.positive? }.size).to eq(2) end
+    it 'has fln 0 pop' do expect(board.search { |s| s.pop == 1 && s.fln.positive? }.size).to eq(4) end
+    it 'has fln 0 pop' do expect(board.search { |s| s.pop == 2 && s.fln.positive? }.size).to eq(4) end
+    it 'has fln 0 pop' do expect(board.search { |s| s.pop == 3 && s.fln.positive? }.size).to eq(0) end
+    it 'has fln 0 pop' do expect(board.has { |s| s.pop0? && s.fln.positive? }).to be true end
+    it 'has fln 0 pop' do expect(board.has { |s| s.pop == 1 && s.fln.positive? }).to be true end
+    it 'has fln 0 pop' do expect(board.has { |s| s.pop == 2 && s.fln.positive? }).to be true end
+    it 'has fln 0 pop' do expect(board.has { |s| s.pop == 3 && s.fln.positive? }).to be false end
   end
 end
