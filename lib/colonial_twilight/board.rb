@@ -4,9 +4,9 @@
 # rubocop:disable Style/AccessorGrouping
 # rubocop:disable Style/ParallelAssignment
 # rubocop:disable Layout/ArrayAlignment
+# rubocop:disable Style/Documentation
 
 module ColonialTwilight
-  # pieces container
   class Forces
     attr_accessor :algerian_troops, :algerian_police
     attr_accessor :french_troops, :french_police
@@ -21,42 +21,42 @@ module ColonialTwilight
       @max_bases = nil
       @control = :uncontrolled
       @max_bases = 2 if %i[Country Sector].include? kind
-      _instance_variables(kind)&.each do |sym|
+      _accessors_to_remove(kind)&.each do |sym|
         instance_variable_set(sym, nil)
       end
     end
 
     private
 
-    def _instance_variables(kind)
+    def _accessors_to_remove(kind)
       case kind
       when :available then %i[@control @fln_active]
       when :casualties then %i[@control @fln_active @fln_bases]
       when :out_of_play then %i[@control @algerian_troops @algerian_police @fln_active @fln_bases]
-      when :Country then %i[@control @algerian_troops @algerian_police @french_troops @french_police @gov_bases]
+      when :Country then %i[@control @algerian_troops @algerian_police @french_troops @french_police]
+      when :City then nil
       when :Sector then nil
       end
     end
 
     public
 
-    alias to_s inspect
     def inspect
-      "
-      #{gov_bases} GOV bases
-        #{french_troops} french troops
-        #{french_police} french police
-        #{algerian_troops} algerian troops
-        #{algerian_police} algerian police
-      #{fln_bases} FLN bases
-        #{fln_underground} underground Guerrillas
-        #{fln_active} active Guerrillas"
+      "GOV bases: #{gov_bases}
+        french troops: #{french_troops}
+        french police: #{french_police}
+        algerian troops: #{algerian_troops}
+        algerian police: #{algerian_police}
+      FLN bases: #{fln_bases}
+        underground Guerrillas: #{fln_underground}
+        active Guerrillas: #{fln_active}"
     end
+    alias to_s inspect
 
     def data
       h = {}
-      %i[algerian_troops algerian_police french_troops french_police
-        fln_underground fln_active fln_bases gov_bases control].each do |sym|
+      %i[algerian_troops algerian_police french_troops french_police gov_bases
+        fln_underground fln_active fln_bases control].each do |sym|
         h[sym] = send(sym) unless send(sym).nil?
       end
       h
@@ -67,10 +67,10 @@ module ColonialTwilight
     end
 
     def fln
-      guerrillas + (@fln_bases || 0)
+      fln_cubes + (@fln_bases || 0)
     end
 
-    def guerrillas
+    def fln_cubes
       (@fln_underground || 0) + (@fln_active || 0)
     end
 
@@ -138,7 +138,6 @@ module ColonialTwilight
     end
   end
 
-  # a point Track
   class Track
     attr_accessor :v
 
@@ -164,7 +163,6 @@ module ColonialTwilight
     end
   end
 
-  # a piece holding Box
   class Box < Forces
     attr_reader :name
 
@@ -174,7 +172,6 @@ module ColonialTwilight
     end
   end
 
-  # a map Sector
   class Sector
     MOUNTAIN = 1
     COASTAL = 2
@@ -211,12 +208,12 @@ module ColonialTwilight
     end
 
     def inspect
-      "#{@descr} #{@terrain}
-      control    : #{@forces.control}
+      "\n#{@descr} #{@terrain}
+      control    : #{control}
       alignment  : #{@alignment}
       terror     : #{@terror}
       population : #{@pop}#{@resettled ? ' resettled' : ''}
-      forces     : #{@forces}
+      #{@forces}
       adjs       : #{@adjacents}"
     end
 
@@ -224,10 +221,14 @@ module ColonialTwilight
       { name: @name, alignment: @alignment, terror: @terror, pop: @pop, resettled: @resettled }.merge(@forces.data)
     end
 
-    %i[gov gov_cubes french_cubes algerian_cubes troops police gov_bases
+    %i[gov gov_bases gov_cubes french_cubes algerian_cubes troops police
       french_troops french_police algerian_troops algerian_police
-      fln guerrillas fln_bases fln_underground fln_active max_bases].each do |sym|
+      fln fln_bases fln_cubes fln_underground fln_active max_bases control].each do |sym|
       define_method(sym) { @forces.send(sym) }
+    end
+
+    def sector?
+      true
     end
 
     def city?
@@ -262,80 +263,20 @@ module ColonialTwilight
       @alignment == :neutral
     end
 
-    def control
-      @forces.control
-    end
-
     def uncontrolled?
-      @forces.control == :uncontrolled
+      control == :uncontrolled
     end
 
     def fln_control?
-      @forces.control == :FLN
+      control == :FLN
     end
 
     def gov_control?
-      @forces.control == :GOV
-    end
-
-    def has_terror?
-      terror.positive?
-    end
-
-    def has_gov?
-      !gov_bases_0? || !gov_cubes_0?
-    end
-
-    def has_fln?
-      !fln_bases_0? or fln.positive?
-    end
-
-    def gov_bases_0?
-      gov_bases.zero?
-    end
-
-    def fln_bases_0?
-      fln_bases.zero?
-    end
-
-    def gov_bases_1m?
-      gov_bases.positive?
-    end
-
-    def fln_bases_1m?
-      fln_bases.positive?
-    end
-
-    def pop0?
-      pop.zero?
-    end
-
-    def gov_cubes_0?
-      gov_cubes.zero?
+      control == :GOV
     end
 
     def add(type, num = 1)
       @forces.add(type, num)
-    end
-
-    def fln_u_1l?
-      fln_underground < 2
-    end
-
-    def fln_u_0?
-      fln_underground.zero?
-    end
-
-    def fln_u_1m?
-      fln_underground.positive?
-    end
-
-    def fln_u_2m?
-      fln_underground > 1
-    end
-
-    def fln_u_3m?
-      fln_underground > 2
     end
 
     def resettle!
@@ -355,14 +296,19 @@ module ColonialTwilight
         raise "can't shift towards support" if support?
 
         @alignment = (oppose? ? :neutral : :support)
+      else
+        raise "unknown shift direction : #{towards}"
       end
     end
   end
 
-  # a City Sector
   class City < Sector
     def initialize(name, wilaya, pop, attrs = 0)
       super name, wilaya, 0, pop, attrs
+    end
+
+    def sector?
+      false
     end
 
     def city?
@@ -370,11 +316,6 @@ module ColonialTwilight
     end
   end
 
-  # a Country Sector
-  # GOV may not enter
-  # FLN may not enter until they become independent
-  # Population is never counted in the total Opposition
-  # May acquire the ability to contain 3 Bases
   class Country < Sector
     attr_reader :independent
 
@@ -383,8 +324,8 @@ module ColonialTwilight
       @descr += " #{@independent ? 'Independant' : 'French'}"
     end
 
-    def add_gov_base
-      raise "no gov bases allowed in #{@name}"
+    def sector?
+      false
     end
 
     def country?
@@ -401,13 +342,12 @@ module ColonialTwilight
     end
   end
 
-  # the game Board
   class Board
     FRANCE_TRACK = %w[A B C D E F].freeze
 
-    attr_reader :spaces_h, :spaces, :sectors, :cities, :countries
+    attr_reader :spaces
 
-    %i[commitment gov_resources fln_resources resettled_sectors france_track border_zone_track
+    %i[commitment gov_resources fln_resources france_track border_zone_track
       support_commitment opposition_bases].each do |sym|
       define_method(sym) { instance_variable_get("@#{sym}").v }
     end
@@ -419,54 +359,65 @@ module ColonialTwilight
     end
 
     def initialize
-      @names = []
-      @spaces_h = {}
+      @spaces = []
       @capabilities = []
-      @resettled_sectors = 0
       @available = Box.new :available
       @casualties = Box.new :casualties
       @out_of_play = Box.new :out_of_play
+      @support_commitment = Track.new 50
+      @opposition_bases = Track.new 50
       @fln_resources = Track.new 50
       @gov_resources = Track.new 50
       @commitment = Track.new 50
-      @support_commitment = Track.new 50
-      @opposition_bases = Track.new 50
       @france_track = Track.new 5
       @border_zone_track = Track.new 4
-      set_sectors
+      set_spaces
       set_adjacents
-      @spaces = @spaces_h.values
-      @sectors = @spaces.reject(&:country?)     # FIXME
-      @cities = @spaces.select(&:city?)         # FIXME
-      @countries = @spaces.select(&:country?)   # FIXME
     end
 
-    def transfer(num, what, from, to, towhat = nil)
-      towhat = what if towhat.nil?
-      from = get_var from if from.is_a? Symbol
-      to = get_var to if to.is_a? Symbol
-      from.add what, -num
-      to.add towhat, num
-      { nn: num, what: what, from: from, to: to, towhat: towhat }
+    def sector
+      @spaces.select(&:sector?)
     end
+    alias sectors sector
 
-    def terror(where, num)
-      where.terror += num
+    def city
+      @spaces.select(&:city?)
     end
+    alias cities city
 
-    def shift(where, towards, num = 1)
-      num.times { where.shift towards }
+    def country
+      @spaces.select(&:country?)
+    end
+    alias countries country
+
+    # def transfer(num, what, from, to, towhat = nil)
+    #   towhat = what if towhat.nil?
+    #   from = get_var from if from.is_a? Symbol
+    #   to = get_var to if to.is_a? Symbol
+    #   from.add what, -num
+    #   to.add towhat, num
+    #   { nn: num, what: what, from: from, to: to, towhat: towhat }
+    # end
+
+    # def terror(where, num)
+    #   where.terror += num
+    # end
+
+    def shift(space, towards, num = 1)
+      num.times { space.shift towards }
     end
 
     def shift_track(what, amount)
       case what
+      when :support_commitment then @support_commitment.clamp amount
+      when :opposition_bases then @opposition_bases.clamp amount
       when :fln_resources then @fln_resources.clamp amount
       when :gov_resources then @gov_resources.clamp amount
       when :commitment then @commitment.clamp amount
       when :france_track then @france_track.shift amount
       when :border_zone_track then @border_zone_track.shift amount
       else
-        raise "shift_track: '#{what}'unknown"
+        raise "unknown track : #{what}"
       end
     end
 
@@ -483,21 +434,12 @@ module ColonialTwilight
       send(where).inject(0) { |i, s| i + block.call(s) }
     end
 
-    def resettle(sector)
-      @spaces_h[sector].resettle!
-      @resettled_sectors += 1
+    def compute_opposition_bases
+      count { |s| s.oppose? ? s.pop : 0 } + count(&:fln_bases)
     end
 
-    def compute_victory_points
-      values = [@support_commitment.v, @opposition_bases.v]
-      @opposition_bases.v = 0
-      @support_commitment.v = @commitment.v
-      @spaces_h.each do |_n, s|
-        @opposition_bases.clamp s.fln_bases
-        @opposition_bases.clamp s.pop if s.alignment == :oppose
-        @support_commitment.clamp s.pop if s.alignment == :support
-      end
-      values << @support_commitment.v << @opposition_bases.v
+    def compute_support_commitment
+      count { |s| s.support? ? s.pop : 0 } + @commitment.v
     end
 
     def data
@@ -506,9 +448,8 @@ module ColonialTwilight
         france_track border_zone_track available casualties out_of_play].each do |sym|
         h[sym] = instance_variable_get("@#{sym}").data
       end
-      h[:resettled_sectors] = @resettled_sectors
       h[:capabilities] = @capabilities
-      h[:spaces] = @spaces_h.inject([]) { |a, (_k, s)| a << s.data }
+      h[:spaces] = @spaces.inject([]) { |a, s| a << s.data }
       h
     end
 
@@ -534,19 +475,10 @@ module ColonialTwilight
     end
 
     def add(kls, *args)
-      s = kls.new(*args)
-      # puts s
-      @names << s.name
-      @spaces_h[s.name] = s
+      @spaces << kls.new(*args)
     end
 
-    def adjacents(idx, *args)
-      @spaces_h[@names[idx]].adjacents = args
-      # @spaces_h[@names[idx]].adjacents = args.map { |i| @names[i] }
-      # puts @spaces_h[@names[idx]]
-    end
-
-    def set_sectors
+    def set_spaces
       mountain = Sector::MOUNTAIN
       border = Sector::BORDER
       coastal = Sector::COASTAL
@@ -582,6 +514,10 @@ module ColonialTwilight
       add Country, 'Tunisia', 1
     end
 
+    def adjacents(idx, *args)
+      @spaces[idx].adjacents = args
+    end
+
     def set_adjacents
       adjacents  0, 1, 2, 3, 7, 8, 11, 26
       adjacents  1, 0, 2, 3, 5
@@ -615,23 +551,20 @@ module ColonialTwilight
       adjacents 29, 2, 4, 5, 9
     end
 
-    def set_sector(idx, opts, align = nil)
-      s = @spaces_h[@names[idx]]
+    def resettle(name)
+      @spaces[@spaces.find_index { |s| s.name == name }].resettle!
+    end
+
+    def set_space(idx, opts, align = nil)
+      s = @spaces[idx]
       s.alignment = align unless align.nil?
       %i[gov_base fln_base french_troops french_police algerian_troops algerian_police
         fln_underground].each { |sym| s.add(sym, opts[sym]) if opts.key? sym }
-      # s.add :gov_base, opts[:govb] if opts.key? :govb
-      # s.add :fln_base, opts[:flnb] if opts.key? :flnb
-      # s.add :french_troops, opts[:ft] if opts.key? :ft
-      # s.add :french_police, opts[:fp] if opts.key? :fp
-      # s.add :algerian_troops, opts[:at] if opts.key? :at
-      # s.add :algerian_police, opts[:ap] if opts.key? :ap
-      # s.add :fln_underground, opts[:fln] if opts.key? :fln
-      # puts s
     end
 
     def short
-      @resettled_sectors = 0
+      @opposition_bases.v = 19
+      @support_commitment.v = 22
       @commitment.v = 15
       @fln_resources.v = 15
       @gov_resources.v = 20
@@ -645,36 +578,34 @@ module ColonialTwilight
       resettle 'Setif'
       resettle 'Tlemcen'
       resettle 'Bordj Bou Arreridj'
-      raise 'resettled sectors not counted' if @resettled_sectors != 3
 
-      set_sector  0, { algerian_police: 1, fln_underground: 1 }, :oppose
-      set_sector  2, { french_police: 1 }
-      set_sector  4, { algerian_police: 1, fln_underground: 1 }, :oppose
-      set_sector  5, { french_police: 1 }
-      set_sector  6, { french_police: 1 }, :support
-      set_sector  7, { fln_underground: 1 }
-      set_sector  8, { french_troops: 4, algerian_police: 1, gov_base: 1 }
-      set_sector  9, { french_troops: 1, algerian_police: 1, gov_base: 1, fln_underground: 1, fln_base: 1 }, :oppose
-      set_sector 10, { french_police: 1, fln_underground: 1, fln_base: 1 }, :oppose
-      set_sector 11, { french_police: 1 }
-      set_sector 12, { french_police: 1, fln_underground: 1, fln_base: 1 }, :oppose
-      set_sector 13, { french_troops: 4, algerian_troops: 1, french_police: 1 }, :support
-      set_sector 14, { algerian_troops: 1, gov_base: 1 }
-      set_sector 15, { french_police: 1, algerian_police: 1, fln_underground: 1, fln_base: 1 }, :oppose
-      set_sector 16, { algerian_troops: 1, french_police: 1, algerian_police: 1 }, :support
-      set_sector 17, { french_police: 1, algerian_police: 1 }
-      set_sector 18, { french_police: 2, fln_underground: 1 }
-      set_sector 19, { french_police: 1, gov_base: 1 }
-      set_sector 20, { french_police: 1 }
-      set_sector 22, { french_police: 1 }
-      set_sector 23, { french_police: 1 }
-      set_sector 24, { french_police: 1 }
-      set_sector 27, {}, :oppose
-      set_sector 28, { fln_underground: 4, fln_base: 2 }
-      set_sector 29, { fln_underground: 5, fln_base: 2 }
+      set_space  0, { algerian_police: 1, fln_underground: 1 }, :oppose
+      set_space  2, { french_police: 1 }
+      set_space  4, { algerian_police: 1, fln_underground: 1 }, :oppose
+      set_space  5, { french_police: 1 }
+      set_space  6, { french_police: 1 }, :support
+      set_space  7, { fln_underground: 1 }
+      set_space  8, { french_troops: 4, algerian_police: 1, gov_base: 1 }
+      set_space  9, { french_troops: 1, algerian_police: 1, gov_base: 1, fln_underground: 1, fln_base: 1 }, :oppose
+      set_space 10, { french_police: 1, fln_underground: 1, fln_base: 1 }, :oppose
+      set_space 11, { french_police: 1 }
+      set_space 12, { french_police: 1, fln_underground: 1, fln_base: 1 }, :oppose
+      set_space 13, { french_troops: 4, algerian_troops: 1, french_police: 1 }, :support
+      set_space 14, { algerian_troops: 1, gov_base: 1 }
+      set_space 15, { french_police: 1, algerian_police: 1, fln_underground: 1, fln_base: 1 }, :oppose
+      set_space 16, { algerian_troops: 1, french_police: 1, algerian_police: 1 }, :support
+      set_space 17, { french_police: 1, algerian_police: 1 }
+      set_space 18, { french_police: 2, fln_underground: 1 }
+      set_space 19, { french_police: 1, gov_base: 1 }
+      set_space 20, { french_police: 1 }
+      set_space 22, { french_police: 1 }
+      set_space 23, { french_police: 1 }
+      set_space 24, { french_police: 1 }
+      set_space 27, {}, :oppose
+      set_space 28, { fln_underground: 4, fln_base: 2 }
+      set_space 29, { fln_underground: 5, fln_base: 2 }
       spaces[28].independent!
       spaces[29].independent!
-      compute_victory_points
     end
 
     def medium
