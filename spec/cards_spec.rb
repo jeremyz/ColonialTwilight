@@ -43,6 +43,14 @@ describe ColonialTwilight::Card do
     end
   end
 
+  describe 'any capability' do
+    deck = ColonialTwilight::Deck.new
+    s = [13, 17, 18, 27, 32, 33, 35]
+    1.upto(71) do |n|
+      it "is flags right #{n}" do expect(deck.pull(n).capability?).to be s.include?(n) end
+    end
+  end
+
   describe 'FLN momentum' do
     deck = ColonialTwilight::Deck.new
     s = [2, 8, 10, 29, 40, 45]

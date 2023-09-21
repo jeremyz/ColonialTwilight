@@ -40,6 +40,10 @@ module ColonialTwilight
       (@attributes & FLN_SPECIAL) == FLN_SPECIAL
     end
 
+    def capability?
+      fln_capability? || gov_capability? || dual_capability?
+    end
+
     def fln_capability?
       (@attributes & FLN_CAPABILITY) == FLN_CAPABILITY
     end
