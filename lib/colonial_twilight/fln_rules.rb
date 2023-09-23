@@ -1,16 +1,25 @@
 #! /usr/bin/env ruby
 # frozen_string_literal: true
 
+# rubocop:disable Style/Documentation
+#
 module ColonialTwilight
-  # general rules governing operations and activities
   module FLNRules
-    # Rally 3.3.1
+    # Rally 3.3.1 + France Track
     def may_rally_in?(space)
       (space.sector? || (space.city? && !space.support?) || (space.country? && space.independent?))
     end
 
     def rally_spaces(board)
       board.search { |s| may_rally_in? s }
+    end
+
+    def may_agitate_in?(space)
+      (!space.country? && (space.fln_control? || space.fln_bases.positive?))
+    end
+
+    def agitate_spaces(spaces)
+      spaces.select { |s| may_agitate_in? s }
     end
 
     # March 3.3.2

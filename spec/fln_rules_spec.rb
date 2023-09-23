@@ -22,6 +22,18 @@ describe ColonialTwilight::FLNRules do
     it 'collects spaces where operation can be conducted' do expect(rules.rally_spaces(board).size).to eq(27) end
   end
 
+  describe 'Agitate' do
+    board = ColonialTwilight::Board.new
+    it 'collects spaces where operation can be conducted' do expect(rules.agitate_spaces(board.spaces).size).to eq(0) end
+  end
+
+  describe 'Agitate' do
+    board = ColonialTwilight::Board.new
+    board.load :short
+    # 6 with bases + 1 in fln control
+    it 'collects spaces where operation can be conducted' do expect(rules.agitate_spaces(board.spaces).size).to eq(5) end
+  end
+
   describe 'Attack' do
     board = ColonialTwilight::Board.new
     # 25 sectors + 3 cities
