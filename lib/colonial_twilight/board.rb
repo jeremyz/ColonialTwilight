@@ -198,7 +198,13 @@ module ColonialTwilight
 
     def _compute_strings
       @terrain = %i[mountain coastal border].map { |s| send("#{s}?") ? s : nil }.reject(&:nil?).join('/')
-      @descr = "#{self.class.name} #{@name} #{@wilaya.nil? ? '' : @wilaya}" + (@sector.nil? ? '' : "-#{@sector}")
+      @descr = "#{@name} #{self.class.name.split('::')[-1]}#{number}"
+    end
+
+    def number
+      return '' if @wilaya.nil? && @sector.nil?
+
+      @descr = "(#{@wilaya}-#{@sector})"
     end
 
     public
@@ -208,7 +214,7 @@ module ColonialTwilight
     end
 
     def inspect
-      "\n#{@descr} #{@terrain}
+      "\n#{@descr} : #{@terrain}
       control    : #{control}
       alignment  : #{@alignment}
       terror     : #{@terror}
@@ -316,12 +322,14 @@ module ColonialTwilight
     end
   end
 
+  # if independent, FLN may Rally, March and Extort in these Countries,
+  # but their Population is never counted in the total Opposition
   class Country < Sector
     attr_reader :independent
 
-    def initialize(name, wilaya)
-      super(name, wilaya, nil, 1, MOUNTAIN | BORDER | COASTAL)
-      @descr += " #{@independent ? 'Independant' : 'French'}"
+    def initialize(name)
+      super(name, nil, nil, 1, MOUNTAIN | BORDER | COASTAL)
+      @descr += ' : French'
     end
 
     def sector?
@@ -338,7 +346,7 @@ module ColonialTwilight
 
     def independent!
       @independent = true
-      @descr += " #{@independent ? 'Independant' : 'French'}"
+      @descr.gsub!(/French/, 'Independent')
     end
   end
 
@@ -510,8 +518,8 @@ module ColonialTwilight
       add Sector, 'Laghouat', 'V', 9, 0
       add Sector, 'Sidi Aissa', 'VI', 1, 0, mountain
       add Sector, 'Ain Oussera', 'VI', 2, 1, mountain
-      add Country, 'Morocco', 0
-      add Country, 'Tunisia', 1
+      add Country, 'Morocco'
+      add Country, 'Tunisia'
     end
 
     def adjacents(idx, *args)
