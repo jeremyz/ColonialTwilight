@@ -76,4 +76,34 @@ describe ColonialTwilight::Card do
       it "is flags right #{n}" do expect(@deck.pull(n).dual_momentum?).to be s.include?(n) end
     end
   end
+
+  describe 'FLN marked' do
+    s = [3, 7, 9, 10, 11, 12, 14, 18, 19, 20, 22, 23, 24, 26, 28,
+         31, 33, 34, 35, 36, 41, 42, 43, 47, 48, 49, 51, 53, 54, 55, 56, 57, 59, 60]
+    1.upto(71) do |n|
+      it "is flags right #{n}" do expect(@deck.pull(n).fln_marked?).to be s.include?(n) end
+    end
+  end
+
+  describe 'Special' do
+    s = [12, 20, 49, 51, 54, 56]
+    1.upto(71) do |n|
+      it "is flags right #{n}" do expect(@deck.pull(n).special?).to be s.include?(n) end
+    end
+  end
+
+  describe 'Dual' do
+    s = [4, 9, 14, 18, 20, 25, 28, 30, 52, 54, 56, 57, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71]
+    1.upto(71) do |n|
+      it "is flags right #{n}" do expect(@deck.pull(n).dual?).to be !s.include?(n) end
+    end
+  end
+
+  describe 'Inspect' do
+    it 'GOV-momentum' do expect((@deck.pull(45).inspect =~ /GOV-momentum/).nil?).to be false end
+    it 'FLN-momentum' do expect((@deck.pull(45).inspect =~ /FLN-momentum/).nil?).to be false end
+    it 'capability' do expect((@deck.pull(45).inspect =~ /capability/).nil?).to be true end
+    it 'capability' do expect((@deck.pull(18).inspect =~ /momentum/).nil?).to be true end
+    it 'capability' do expect((@deck.pull(18).inspect =~ /FLN-capability/).nil?).to be true end
+  end
 end
