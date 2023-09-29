@@ -7,7 +7,7 @@ module ColonialTwilight
   module FLNRules
     # Rally 3.3.1 + France Track
     def may_rally_in?(space)
-      (space.sector? || (space.city? && !space.support?) || (space.country? && space.independent?))
+      space.sector? || (space.city? && !space.support?) || (space.country? && space.independent?)
     end
 
     def rally_spaces(board)
@@ -15,7 +15,7 @@ module ColonialTwilight
     end
 
     def may_agitate_in?(space)
-      (!space.country? && (space.fln_control? || space.fln_bases.positive?))
+      !space.country? && (space.fln_control? || space.fln_bases.positive?)
     end
 
     def agitate_spaces(spaces)
@@ -26,7 +26,7 @@ module ColonialTwilight
 
     # Attack 3.3.3
     def may_attack_in?(space)
-      (space.fln_cubes.positive? && space.gov.positive?)
+      space.fln_cubes.positive? && space.gov.positive?
     end
 
     def attack_spaces(board)
@@ -35,7 +35,7 @@ module ColonialTwilight
 
     # Terror 3.3.4
     def may_terror_in?(space)
-      (!space.country? && !space.pop.zero? && space.fln_underground.positive?)
+      !space.country? && !space.pop.zero? && space.fln_underground.positive?
     end
 
     def terror_spaces(board)
@@ -44,8 +44,8 @@ module ColonialTwilight
 
     # Extort 4.3.1
     def may_extort_in?(space)
-      (!space.pop.zero? && space.fln_underground.positive? && space.fln_control? &&
-        (space.country? ? space.independent? : true))
+      !space.pop.zero? && space.fln_underground.positive? && space.fln_control? &&
+        (space.country? ? space.independent? : true)
     end
 
     def extort_spaces(board)
@@ -54,7 +54,7 @@ module ColonialTwilight
 
     # Subvert 4.3.2
     def may_subvert_in?(space)
-      (space.fln_underground.positive? && space.algerian_cubes.positive?)
+      space.fln_underground.positive? && space.algerian_cubes.positive?
     end
 
     def subvert_spaces(board)
@@ -72,7 +72,7 @@ module ColonialTwilight
 
     # OAS 5.3.1
     def may_oas_in?(space)
-      (!space.country? && !space.pop.zero? && !space.terror.positive?)
+      !space.country? && !space.pop.zero? && !space.terror.positive?
     end
 
     def oas_spaces(board)

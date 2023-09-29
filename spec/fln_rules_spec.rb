@@ -9,103 +9,107 @@ end
 
 describe ColonialTwilight::FLNRules do
   rules = FLNRulesImpl.new
-  describe 'Rally' do
-    board = ColonialTwilight::Board.new
-    # 25 sectors + 3 cities
-    it 'collects spaces where operation can be conducted' do expect(rules.rally_spaces(board).size).to eq(28) end
+
+  before do
+    @board = ColonialTwilight::Board.new
   end
 
   describe 'Rally' do
-    board = ColonialTwilight::Board.new
-    board.load :short
-    # 25 sectors + 2 countries
-    it 'collects spaces where operation can be conducted' do expect(rules.rally_spaces(board).size).to eq(27) end
+    it 'collects spaces where operation can be conducted' do
+      expect(rules.rally_spaces(@board).size).to eq(28)
+    end
+
+    it 'collects spaces where operation can be conducted' do
+      @board.load :short
+      # 25 sectors + 2 countries
+      expect(rules.rally_spaces(@board).size).to eq(27)
+    end
   end
 
   describe 'Agitate' do
-    board = ColonialTwilight::Board.new
-    it 'collects spaces where operation can be conducted' do expect(rules.agitate_spaces(board.spaces).size).to eq(0) end
-  end
+    it 'collects spaces where operation can be conducted' do
+      expect(rules.agitate_spaces(@board.spaces).size).to eq(0)
+    end
 
-  describe 'Agitate' do
-    board = ColonialTwilight::Board.new
-    board.load :short
-    # 6 with bases + 1 in fln control
-    it 'collects spaces where operation can be conducted' do expect(rules.agitate_spaces(board.spaces).size).to eq(5) end
-  end
-
-  describe 'Attack' do
-    board = ColonialTwilight::Board.new
-    # 25 sectors + 3 cities
-    it 'collects spaces where operation can be conducted' do expect(rules.attack_spaces(board).size).to eq(0) end
+    it 'collects spaces where operation can be conducted' do
+      @board.load :short
+      # 6 with bases + 1 in fln control
+      expect(rules.agitate_spaces(@board.spaces).size).to eq(5)
+    end
   end
 
   describe 'Attack' do
-    board = ColonialTwilight::Board.new
-    board.load :short
-    # 25 sectors + 2 countries
-    it 'collects spaces where operation can be conducted' do expect(rules.attack_spaces(board).size).to eq(7) end
+    it 'collects spaces where operation can be conducted' do
+      # 25 sectors + 3 cities
+      expect(rules.attack_spaces(@board).size).to eq(0)
+    end
+
+    it 'collects spaces where operation can be conducted' do
+      @board.load :short
+      # 25 sectors + 2 countries
+      expect(rules.attack_spaces(@board).size).to eq(7)
+    end
   end
 
   describe 'Terror' do
-    board = ColonialTwilight::Board.new
-    it 'collects spaces where operation can be conducted' do expect(rules.terror_spaces(board).size).to eq(0) end
-  end
+    it 'collects spaces where operation can be conducted' do
+      expect(rules.terror_spaces(@board).size).to eq(0)
+    end
 
-  describe 'Terror' do
-    board = ColonialTwilight::Board.new
-    board.load :short
-    # 6 sectors
-    it 'collects spaces where operation can be conducted' do expect(rules.terror_spaces(board).size).to eq(6) end
-  end
-
-  describe 'Extort' do
-    board = ColonialTwilight::Board.new
-    it 'collects spaces where operation can be conducted' do expect(rules.extort_spaces(board).size).to eq(0) end
+    it 'collects spaces where operation can be conducted' do
+      # 6 sectors
+      @board.load :short
+      expect(rules.terror_spaces(@board).size).to eq(6)
+    end
   end
 
   describe 'Extort' do
-    board = ColonialTwilight::Board.new
-    board.load :short
-    # 2 sectors
-    it 'collects spaces where operation can be conducted' do expect(rules.extort_spaces(board).size).to eq(2) end
+    it 'collects spaces where operation can be conducted' do
+      expect(rules.extort_spaces(@board).size).to eq(0)
+    end
+
+    it 'collects spaces where operation can be conducted' do
+      @board.load :short
+      # 2 sectors
+      expect(rules.extort_spaces(@board).size).to eq(2)
+    end
   end
 
   describe 'Subvert' do
-    board = ColonialTwilight::Board.new
-    it 'collects spaces where operation can be conducted' do expect(rules.subvert_spaces(board).size).to eq(0) end
-  end
+    it 'collects spaces where operation can be conducted' do
+      expect(rules.subvert_spaces(@board).size).to eq(0)
+    end
 
-  describe 'Subvert' do
-    board = ColonialTwilight::Board.new
-    board.load :short
-    # 4 sectors
-    it 'collects spaces where operation can be conducted' do expect(rules.subvert_spaces(board).size).to eq(4) end
-  end
-
-  describe 'Ambush' do
-    board = ColonialTwilight::Board.new
-    # 25 sectors + 3 cities
-    it 'collects spaces where operation can be conducted' do expect(rules.ambush_spaces(board).size).to eq(0) end
+    it 'collects spaces where operation can be conducted' do
+      @board.load :short
+      # 4 sectors
+      expect(rules.subvert_spaces(@board).size).to eq(4)
+    end
   end
 
   describe 'Ambush' do
-    board = ColonialTwilight::Board.new
-    board.load :short
-    # 25 sectors + 2 countries
-    it 'collects spaces where operation can be conducted' do expect(rules.ambush_spaces(board).size).to eq(7) end
+    it 'collects spaces where operation can be conducted' do
+      # 25 sectors + 3 cities
+      expect(rules.ambush_spaces(@board).size).to eq(0)
+    end
+
+    it 'collects spaces where operation can be conducted' do
+      @board.load :short
+      # 25 sectors + 2 countries
+      expect(rules.ambush_spaces(@board).size).to eq(7)
+    end
   end
 
   describe 'OAS' do
-    board = ColonialTwilight::Board.new
-    # 14 sectors + 3 cities
-    it 'collects spaces where operation can be conducted' do expect(rules.oas_spaces(board).size).to eq(17) end
-  end
+    it 'collects spaces where operation can be conducted' do
+      # 14 sectors + 3 cities
+      expect(rules.oas_spaces(@board).size).to eq(17)
+    end
 
-  describe 'OAS' do
-    board = ColonialTwilight::Board.new
-    board.load :short
-    # 11 sectors + 3 countries
-    it 'collects spaces where operation can be conducted' do expect(rules.oas_spaces(board).size).to eq(14) end
+    it 'collects spaces where operation can be conducted' do
+      @board.load :short
+      # 11 sectors + 3 countries
+      expect(rules.oas_spaces(@board).size).to eq(14)
+    end
   end
 end
