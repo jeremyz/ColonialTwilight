@@ -3,7 +3,10 @@
 
 # this adds ascii colorization to String class
 class String
+  RESET = "\033[0m"
+  CLEAR_LINE = "\33[2K\r"
   CLS = "\033[0;0f\033\[2J"
+
   @color_codes = {
     black: 0,   light_black: 60,
     red: 1,     light_red: 61,
@@ -58,7 +61,6 @@ class String
 
   private
 
-  RESET = "\033[0m"
   START_CODE = /^\033\[([0-9;]+)m/.freeze
   # negative lookbehind : (?<! ) + ^ => is not at the start of the line
   # negative lookahead : (?! ) + $ => is not at the end of the line
