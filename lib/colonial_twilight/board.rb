@@ -1,362 +1,16 @@
 #! /usr/bin/env ruby
 # frozen_string_literal: true
 
-# rubocop:disable Style/AccessorGrouping
-# rubocop:disable Style/ParallelAssignment
-# rubocop:disable Layout/ArrayAlignment
-# rubocop:disable Style/Documentation
+require 'colonial_twilight/spaces'
 
 module ColonialTwilight
-  class Forces
-    attr_accessor :algerian_troops, :algerian_police
-    attr_accessor :french_troops, :french_police
-    attr_accessor :fln_underground, :fln_active
-    attr_accessor :fln_bases, :gov_bases
-    attr_reader :max_bases, :control
-
-    def initialize(kind)
-      @algerian_troops, @algerian_police = 0, 0
-      @french_troops, @french_police, @gov_bases = 0, 0, 0
-      @fln_underground, @fln_active, @fln_bases = 0, 0, 0
-      @max_bases = nil
-      @control = :uncontrolled
-      @max_bases = 2 if %i[Country Sector].include? kind
-      _accessors_to_remove(kind)&.each do |sym|
-        instance_variable_set(sym, nil)
-      end
-    end
-
-    private
-
-    def _accessors_to_remove(kind)
-      case kind
-      when :available then %i[@control @fln_active]
-      when :casualties then %i[@control @fln_active @fln_bases]
-      when :out_of_play then %i[@control @algerian_troops @algerian_police @fln_active @fln_bases]
-      when :Country then %i[@control @algerian_troops @algerian_police @french_troops @french_police]
-      when :City then nil
-      when :Sector then nil
-      end
-    end
-
-    public
-
-    def inspect
-      "GOV bases: #{gov_bases}
-        french troops: #{french_troops}
-        french police: #{french_police}
-        algerian troops: #{algerian_troops}
-        algerian police: #{algerian_police}
-      FLN bases: #{fln_bases}
-        underground Guerrillas: #{fln_underground}
-        active Guerrillas: #{fln_active}"
-    end
-    alias to_s inspect
-
-    def data
-      h = {}
-      %i[algerian_troops algerian_police french_troops french_police gov_bases
-        fln_underground fln_active fln_bases control].each do |sym|
-        h[sym] = send(sym) unless send(sym).nil?
-      end
-      h
-    end
-
-    def bases
-      (@gov_bases || 0) + (@fln_bases || 0)
-    end
-
-    def fln
-      fln_cubes + (@fln_bases || 0)
-    end
-
-    def fln_cubes
-      (@fln_underground || 0) + (@fln_active || 0)
-    end
-
-    def gov
-      gov_cubes + (@gov_bases || 0)
-    end
-
-    def gov_cubes
-      french_cubes + algerian_cubes
-    end
-
-    def french_cubes
-      (@french_troops || 0) + (@french_police || 0)
-    end
-
-    def algerian_cubes
-      (@algerian_troops || 0) + (@algerian_police || 0)
-    end
-
-    def troops
-      (@french_troops || 0) + (@algerian_troops || 0)
-    end
-
-    def police
-      (@french_police || 0) + (@algerian_police || 0)
-    end
-
-    def add(type, num = 1)
-      case type
-      when :french_troops then @french_troops += num
-      when :french_police then @french_police += num
-      when :algerian_troops then @algerian_troops += num
-      when :algerian_police then @algerian_police += num
-      when :fln_underground then @fln_underground += num
-      when :fln_active then @fln_active += num
-      when :gov_base then add_base(:gov_base, num)
-      when :fln_base then add_base(:fln_base, num)
-      else
-        raise "unknown force type : #{type}"
-      end
-      update_control
-    end
-
-    private
-
-    def add_base(type, num = 1)
-      if !@max_bases.nil? && (bases + num) > @max_bases
-        raise "too much bases in #{@name} (#{bases} + #{num}) > #{@max_bases}"
-      end
-
-      @gov_bases += num if type == :gov_base
-      @fln_bases += num if type == :fln_base
-    end
-
-    def update_control
-      return if @control.nil?
-
-      @control = (
-          case gov <=> fln
-          when  0 then :uncontrolled
-          when  1 then :GOV
-          when -1 then :FLN
-          end
-        )
-    end
-  end
-
-  class Track
-    attr_accessor :v
-
-    def initialize(max)
-      @v = 0
-      @max = max
-    end
-
-    def shift(val)
-      w = @v + val
-      return false if w.negative? || w > @max
-
-      @v = w
-      true
-    end
-
-    def clamp(val)
-      @v = (@v + val).clamp(0, @max)
-    end
-
-    def data
-      @v
-    end
-  end
-
-  class Box < Forces
-    attr_reader :name
-
-    def initialize(sym)
-      super sym
-      @name = sym
-    end
-  end
-
-  class Sector
-    MOUNTAIN = 1
-    COASTAL = 2
-    BORDER = 4
-
-    attr_reader :wilaya, :sector, :name, :resettled
-    attr_accessor :pop, :terror, :adjacents
-    attr_accessor :alignment
-
-    def initialize(name, wilaya, sector, pop, attrs = 0)
-      @name = name
-      @wilaya = wilaya
-      @sector = sector
-      @pop = pop
-      @attrs = attrs
-      @alignment = :neutral
-      @resettled = false
-      @terror = 0
-      @forces = Forces.new self.class.name.split('::')[-1].to_sym
-      _compute_strings
-    end
-
-    private
-
-    def _compute_strings
-      @terrain = %i[mountain coastal border].map { |s| send("#{s}?") ? s : nil }.reject(&:nil?).join('/')
-      @descr = "#{@name} #{self.class.name.split('::')[-1]}#{number}"
-    end
-
-    def number
-      return '' if @wilaya.nil? && @sector.nil?
-
-      @descr = "(#{@wilaya}-#{@sector})"
-    end
-
-    public
-
-    def to_s
-      @name
-    end
-
-    def inspect
-      "\n#{@descr} : #{@terrain}
-      control    : #{control}
-      alignment  : #{@alignment}
-      terror     : #{@terror}
-      population : #{@pop}#{@resettled ? ' resettled' : ''}
-      #{@forces}
-      adjs       : #{@adjacents}"
-    end
-
-    def data
-      { name: @name, alignment: @alignment, terror: @terror, pop: @pop, resettled: @resettled }.merge(@forces.data)
-    end
-
-    %i[gov gov_bases gov_cubes french_cubes algerian_cubes troops police
-      french_troops french_police algerian_troops algerian_police
-      fln fln_bases fln_cubes fln_underground fln_active max_bases control].each do |sym|
-      define_method(sym) { @forces.send(sym) }
-    end
-
-    def sector?
-      true
-    end
-
-    def city?
-      false
-    end
-
-    def country?
-      false
-    end
-
-    def border?
-      (@attrs & BORDER) == BORDER
-    end
-
-    def coastal?
-      (@attrs & COASTAL) == COASTAL
-    end
-
-    def mountain?
-      (@attrs & MOUNTAIN) == MOUNTAIN
-    end
-
-    def support?
-      @alignment == :support
-    end
-
-    def oppose?
-      @alignment == :oppose
-    end
-
-    def neutral?
-      @alignment == :neutral
-    end
-
-    def uncontrolled?
-      control == :uncontrolled
-    end
-
-    def fln_control?
-      control == :FLN
-    end
-
-    def gov_control?
-      control == :GOV
-    end
-
-    def add(type, num = 1)
-      @forces.add(type, num)
-    end
-
-    def resettle!
-      raise "can't resettle a country " if country?
-      raise "can't resettle a sector with a population > 1" if @pop != 1
-
-      @pop = 0
-      @resettled = true
-    end
-
-    def shift(towards)
-      if towards == :oppose
-        raise "can't shift towards oppose" if oppose?
-
-        @alignment = (support? ? :neutral : :oppose)
-      elsif towards == :support
-        raise "can't shift towards support" if support?
-
-        @alignment = (oppose? ? :neutral : :support)
-      else
-        raise "unknown shift direction : #{towards}"
-      end
-    end
-  end
-
-  class City < Sector
-    def initialize(name, wilaya, pop, attrs = 0)
-      super name, wilaya, 0, pop, attrs
-    end
-
-    def sector?
-      false
-    end
-
-    def city?
-      true
-    end
-  end
-
-  # if independent, FLN may Rally, March and Extort in these Countries,
-  # but their Population is never counted in the total Opposition
-  class Country < Sector
-    attr_reader :independent
-
-    def initialize(name)
-      super(name, nil, nil, 1, MOUNTAIN | BORDER | COASTAL)
-      @descr += ' : French'
-    end
-
-    def sector?
-      false
-    end
-
-    def country?
-      true
-    end
-
-    def independent?
-      @independent
-    end
-
-    def independent!
-      @independent = true
-      @descr.gsub!(/French/, 'Independent')
-    end
-  end
-
   class Board
     FRANCE_TRACK = %w[A B C D E F].freeze
 
     attr_reader :spaces
 
     %i[commitment gov_resources fln_resources france_track border_zone_track
-      support_commitment opposition_bases].each do |sym|
+       support_commitment opposition_bases].each do |sym|
       define_method(sym) { instance_variable_get("@#{sym}").v }
     end
 
@@ -383,6 +37,19 @@ module ColonialTwilight
       set_adjacents
     end
 
+    def load(scenario)
+      case scenario
+      when :short then short
+      when :medium then medium
+      when :full then full
+      else raise "unknown scenario : #{scenario}"
+      end
+    end
+
+    def by_name(name)
+      @spaces.find { |s| s.name == name }
+    end
+
     def sector
       @spaces.select(&:sector?)
     end
@@ -397,37 +64,6 @@ module ColonialTwilight
       @spaces.select(&:country?)
     end
     alias countries country
-
-    # def transfer(num, what, from, to, towhat = nil)
-    #   towhat = what if towhat.nil?
-    #   from = get_var from if from.is_a? Symbol
-    #   to = get_var to if to.is_a? Symbol
-    #   from.add what, -num
-    #   to.add towhat, num
-    #   { nn: num, what: what, from: from, to: to, towhat: towhat }
-    # end
-
-    # def terror(where, num)
-    #   where.terror += num
-    # end
-
-    def shift(space, towards, num = 1)
-      num.times { space.shift towards }
-    end
-
-    def shift_track(what, amount)
-      case what
-      when :support_commitment then @support_commitment.clamp amount
-      when :opposition_bases then @opposition_bases.clamp amount
-      when :fln_resources then @fln_resources.clamp amount
-      when :gov_resources then @gov_resources.clamp amount
-      when :commitment then @commitment.clamp amount
-      when :france_track then @france_track.shift amount
-      when :border_zone_track then @border_zone_track.shift amount
-      else
-        raise "unknown track : #{what}"
-      end
-    end
 
     def has(where = :spaces, &block)
       r = search(where, &block)
@@ -450,35 +86,70 @@ module ColonialTwilight
       count { |s| s.support? ? s.pop : 0 } + @commitment.v
     end
 
-    def data
-      h = {}
-      %i[gov_resources fln_resources commitment support_commitment opposition_bases
-        france_track border_zone_track available casualties out_of_play].each do |sym|
-        h[sym] = instance_variable_get("@#{sym}").data
-      end
-      h[:capabilities] = @capabilities
-      h[:spaces] = @spaces.inject([]) { |a, s| a << s.data }
-      h
+    def shift(space, towards, num = 1)
+      num.times { space.shift towards }
     end
 
-    def load(scenario)
-      case scenario
-      when :short then short
-      when :medium then medium
-      when :full then full
-      else raise "unknown scenario : #{scenario}"
+    def shift_track(what, amount)
+      case what
+      when :support_commitment then @support_commitment.clamp amount
+      when :opposition_bases then @opposition_bases.clamp amount
+      when :fln_resources then @fln_resources.clamp amount
+      when :gov_resources then @gov_resources.clamp amount
+      when :commitment then @commitment.clamp amount
+      when :france_track then @france_track.clamp amount
+      when :border_zone_track then @border_zone_track.clamp amount
+      else
+        raise "unknown track : #{what}"
       end
     end
+
+    def apply(action)
+      action.steps.each do |step|
+        case step[:kind]
+        when :transfer then transfer(step)
+        else raise "unknow action step #{step}"
+        end
+      end
+    end
+
+    # def terror(where, num)
+    #   where.terror += num
+    # end
+
+    # def data
+    #   h = {}
+    #   %i[gov_resources fln_resources commitment support_commitment opposition_bases
+    #     france_track border_zone_track available casualties out_of_play].each do |sym|
+    #     h[sym] = instance_variable_get("@#{sym}").data
+    #   end
+    #   h[:capabilities] = @capabilities
+    #   h[:spaces] = @spaces.inject([]) { |a, s| a << s.data }
+    #   h
+    # end
 
     private
 
-    def get_var(sym)
-      case sym
+    def transfer(data)
+      src = get_obj(data[:src])
+      dst = get_obj(data[:dst])
+      src.add data[:what], -data[:num]
+      dst.add flip?(data), data[:num]
+    end
+
+    def flip?(data)
+      !data[:flip] ? data[:what] : data[:flip]
+    end
+
+    def get_obj(obj)
+      return obj if obj.is_a? ColonialTwilight::Sector
+
+      case obj
       when :available then @available
       when :casualties then @casualties
       when :out_of_play then @out_of_play
       else
-        raise "unknown Board variable named #{sym}"
+        raise "unknown Board variable named #{obj}"
       end
     end
 
@@ -560,14 +231,14 @@ module ColonialTwilight
     end
 
     def resettle(name)
-      @spaces[@spaces.find_index { |s| s.name == name }].resettle!
+      by_name(name).resettle!
     end
 
     def set_space(idx, opts, align = nil)
       s = @spaces[idx]
       s.alignment = align unless align.nil?
       %i[gov_base fln_base french_troops french_police algerian_troops algerian_police
-        fln_underground].each { |sym| s.add(sym, opts[sym]) if opts.key? sym }
+         fln_underground].each { |sym| s.add(sym, opts[sym]) if opts.key? sym }
     end
 
     def short
@@ -578,11 +249,8 @@ module ColonialTwilight
       @gov_resources.v = 20
       @france_track.v = 4
       @border_zone_track.v = 3
-      @out_of_play.fln_underground = 5
-      @available.gov_bases = 2
-      @available.french_police = 4
-      @available.fln_bases = 7
-      @available.fln_underground = 8
+      @out_of_play.init({ fln_underground: 5 })
+      @available.init({ gov_base: 2, french_police: 4, fln_base: 7, fln_underground: 8 })
       resettle 'Setif'
       resettle 'Tlemcen'
       resettle 'Bordj Bou Arreridj'
@@ -625,7 +293,3 @@ module ColonialTwilight
     end
   end
 end
-
-# class ColonialTwilight::Sector
-#   undef :adjacents=
-# end
