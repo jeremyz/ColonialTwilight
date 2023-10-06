@@ -1,8 +1,6 @@
 #! /usr/bin/env ruby
 # frozen_string_literal: true
 
-# rubocop:disable Style/Documentation
-#
 module ColonialTwilight
   module FLNRules
     # Rally 3.3.1 + France Track
@@ -11,15 +9,19 @@ module ColonialTwilight
     end
 
     def rally_spaces(board)
-      board.search { |s| may_rally_in? s }
+      board.search(&method(:may_rally_in?))
     end
 
     def may_agitate_in?(space)
       !space.country? && (space.fln_control? || space.fln_bases.positive?)
     end
 
-    def agitate_spaces(spaces)
-      spaces.select { |s| may_agitate_in? s }
+    def agitate_spaces(board)
+      board.search(&method(:may_agitate_in?))
+    end
+
+    def max_fln_to_place_in(space)
+      space.fln_bases.positive? ? space.pop + 1 - space.fln_cubes : 1
     end
 
     # March 3.3.2
@@ -30,7 +32,7 @@ module ColonialTwilight
     end
 
     def attack_spaces(board)
-      board.search { |s| may_attack_in? s }
+      board.search(&method(:may_attack_in?))
     end
 
     # Terror 3.3.4
@@ -39,7 +41,7 @@ module ColonialTwilight
     end
 
     def terror_spaces(board)
-      board.search { |s| may_terror_in? s }
+      board.search(&method(:may_terror_in?))
     end
 
     # Extort 4.3.1
@@ -49,7 +51,7 @@ module ColonialTwilight
     end
 
     def extort_spaces(board)
-      board.search { |s| may_extort_in? s }
+      board.search(&method(:may_extort_in?))
     end
 
     # Subvert 4.3.2
@@ -58,7 +60,7 @@ module ColonialTwilight
     end
 
     def subvert_spaces(board)
-      board.search { |s| may_subvert_in? s }
+      board.search(&method(:may_subvert_in?))
     end
 
     # Ambush 4.3.3
@@ -67,7 +69,7 @@ module ColonialTwilight
     end
 
     def ambush_spaces(board)
-      board.search { |s| may_ambush_in? s }
+      board.search(&method(:may_ambush_in?))
     end
 
     # OAS 5.3.1
@@ -76,7 +78,7 @@ module ColonialTwilight
     end
 
     def oas_spaces(board)
-      board.search { |s| may_oas_in? s }
+      board.search(&method(:may_oas_in?))
     end
   end
 end

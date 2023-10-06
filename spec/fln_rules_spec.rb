@@ -24,17 +24,29 @@ describe ColonialTwilight::FLNRules do
       # 25 sectors + 2 countries
       expect(rules.rally_spaces(@board).size).to eq(27)
     end
+
+    it 'may place 1 FLN cube' do
+      @board.load :short
+      space = @board.by_name('Mostaganem')
+      expect(rules.max_fln_to_place_in(space)).to eq(1)
+    end
+
+    it 'may place 2 FLN cube' do
+      @board.load :short
+      space = @board.by_name('Orleansville')
+      expect(rules.max_fln_to_place_in(space)).to eq(2)
+    end
   end
 
   describe 'Agitate' do
     it 'collects spaces where operation can be conducted' do
-      expect(rules.agitate_spaces(@board.spaces).size).to eq(0)
+      expect(rules.agitate_spaces(@board).size).to eq(0)
     end
 
     it 'collects spaces where operation can be conducted' do
       @board.load :short
       # 6 with bases + 1 in fln control
-      expect(rules.agitate_spaces(@board.spaces).size).to eq(5)
+      expect(rules.agitate_spaces(@board).size).to eq(5)
     end
   end
 
