@@ -34,7 +34,8 @@ describe ColonialTwilight::FLNRules do
     it 'may place 2 FLN cube' do
       @board.load :short
       space = @board.by_name('Orleansville')
-      expect(rules.max_fln_to_place_in(space)).to eq(2)
+      space.add :fln_base
+      expect(rules.max_fln_to_place_in(space)).to eq(3)
     end
   end
 

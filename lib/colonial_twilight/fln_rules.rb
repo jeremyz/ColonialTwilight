@@ -21,7 +21,7 @@ module ColonialTwilight
     end
 
     def max_fln_to_place_in(space)
-      space.fln_bases.positive? ? space.pop + 1 - space.fln_cubes : 1
+      space.fln_bases.positive? ? space.fln_bases + space.pop - space.fln_cubes : 1
     end
 
     # March 3.3.2
