@@ -12,14 +12,10 @@ module ColonialTwilight
       @max = max
     end
 
-    # FIXME: is that needed ?
-    # def shift(val)
-    #   w = @v + val
-    #   return false if w.negative? || w > @max
-    #
-    #   @v = w
-    #   true
-    # end
+    def shift(val)
+      @v += val
+      raise "out of track #{@v}" if @v.negative? || @v > @max
+    end
 
     def clamp(val)
       @v = (@v + val).clamp(0, @max)
@@ -117,6 +113,10 @@ module ColonialTwilight
       (@attrs & MOUNTAIN) == MOUNTAIN
     end
 
+    def terror?
+      @terror.positive?
+    end
+
     def support?
       @alignment == :support
     end
@@ -189,6 +189,7 @@ module ColonialTwilight
 
     def initialize(name)
       super(name, nil, nil, 1, MOUNTAIN | BORDER | COASTAL)
+      @independent = false
       @descr += ' : French'
     end
 
