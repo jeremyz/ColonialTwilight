@@ -130,8 +130,9 @@ module ColonialTwilight
     end
 
     def update_control
-      return if @control.nil?
+      return nil if @control.nil?
 
+      ctr = @control
       @control = (
           case gov <=> fln
           when  0 then :uncontrolled
@@ -139,6 +140,7 @@ module ColonialTwilight
           when -1 then :FLN
           end
         )
+      @control != ctr
     end
   end
 end

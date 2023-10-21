@@ -20,7 +20,7 @@ module ColonialTwilight
       board.search(&method(:may_agitate_in?))
     end
 
-    def max_fln_to_place_in(space)
+    def max_placable_flns(space)
       space.fln_bases.positive? ? space.fln_bases + space.pop - space.fln_cubes : 1
     end
 
