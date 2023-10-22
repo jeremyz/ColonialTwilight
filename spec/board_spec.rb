@@ -87,8 +87,8 @@ describe ColonialTwilight::Board do
     it 'has fln 2 pop' do expect(board.has { |s| s.pop == 2 && s.fln.positive? }).to be true end
     it 'has fln 3 pop' do expect(board.has { |s| s.pop == 3 && s.fln.positive? }).to be false end
     it 'count fln_bases' do expect(board.count(&:fln_bases)).to eq(8) end
-    it 'count fln with bases' do expect(board.count { |s| s.fln_bases.zero? ? 0 : s.fln_cubes }).to eq(13) end
-    it 'count fln without bases' do expect(board.count { |s| s.fln_bases.zero? ? s.fln_cubes : 0 }).to eq(4) end
-    it 'count fln in country' do expect(board.count { |s| s.country? ? s.fln_cubes : 0 }).to eq(9) end
+    it 'count fln with bases' do expect(board.count { |s| s.fln_bases.zero? ? 0 : s.guerrillas }).to eq(13) end
+    it 'count fln without bases' do expect(board.count { |s| s.fln_bases.zero? ? s.guerrillas : 0 }).to eq(4) end
+    it 'count fln in country' do expect(board.count { |s| s.country? ? s.guerrillas : 0 }).to eq(9) end
   end
 end

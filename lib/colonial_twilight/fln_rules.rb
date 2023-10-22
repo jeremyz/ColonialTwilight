@@ -20,15 +20,15 @@ module ColonialTwilight
       board.search(&method(:may_agitate_in?))
     end
 
-    def max_placable_flns(space)
-      space.fln_bases.positive? ? space.fln_bases + space.pop - space.fln_cubes : 1
+    def max_placable_guerrillas(space)
+      space.fln_bases.positive? ? space.fln_bases + space.pop : 1
     end
 
     # March 3.3.2
 
     # Attack 3.3.3
     def may_attack_in?(space)
-      space.fln_cubes.positive? && space.gov.positive?
+      space.guerrillas.positive? && space.gov.positive?
     end
 
     def attack_spaces(board)

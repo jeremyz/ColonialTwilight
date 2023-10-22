@@ -71,10 +71,10 @@ module ColonialTwilight
     end
 
     def fln
-      fln_cubes + (@fln_bases || 0)
+      guerrillas + (@fln_bases || 0)
     end
 
-    def fln_cubes
+    def guerrillas
       (@fln_underground || 0) + (@fln_active || 0)
     end
 

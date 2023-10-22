@@ -85,7 +85,7 @@ module ColonialTwilight
 
     %i[gov gov_bases gov_cubes french_cubes algerian_cubes troops police
        french_troops french_police algerian_troops algerian_police
-       fln fln_bases fln_cubes fln_underground fln_active max_bases control].each do |sym|
+       fln fln_bases guerrillas fln_underground fln_active max_bases control].each do |sym|
       define_method(sym) { @forces.send(sym) }
     end
 
