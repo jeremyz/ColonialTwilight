@@ -15,6 +15,7 @@ module ColonialTwilight
     def shift(val)
       @v += val
       raise "out of track #{@v}" if @v.negative? || @v > @max
+      @v
     end
 
     def clamp(val)
