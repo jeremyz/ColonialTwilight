@@ -6,6 +6,7 @@ require 'colonial_twilight/spaces'
 module ColonialTwilight
   class Board
     FRANCE_TRACK = %w[A B C D E F].freeze
+    TRACKS = %i[support_commitment opposition_bases fln_resources gov_resources commitment france_track border_zone_track].freeze
 
     attr_reader :spaces
 
@@ -37,6 +38,10 @@ module ColonialTwilight
       set_adjacents
     end
 
+    def inspect
+      'Board'
+    end
+
     def load(scenario)
       case scenario
       when :short then short
@@ -66,8 +71,7 @@ module ColonialTwilight
     alias countries country
 
     def has(where = :spaces, &block)
-      r = search(where, &block)
-      r.length.positive?
+      !send(where).select(&block).empty?
     end
 
     def search(where = :spaces, &block)
@@ -91,17 +95,9 @@ module ColonialTwilight
     end
 
     def shift_track(what, amount)
-      case what
-      when :support_commitment then @support_commitment.clamp amount
-      when :opposition_bases then @opposition_bases.clamp amount
-      when :fln_resources then @fln_resources.clamp amount
-      when :gov_resources then @gov_resources.clamp amount
-      when :commitment then @commitment.clamp amount
-      when :france_track then @france_track.clamp amount
-      when :border_zone_track then @border_zone_track.clamp amount
-      else
-        raise "unknown track : #{what}"
-      end
+      raise "unknown track : #{what}" unless TRACKS.include? what
+
+      instance_variable_get("@#{what}").shift amount
     end
 
     def apply(action)
