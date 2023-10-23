@@ -25,17 +25,31 @@ describe ColonialTwilight::FLNRules do
       expect(rules.rally_spaces(@board).size).to eq(27)
     end
 
+    it 'may_rally_in? not in city at support' do
+      a = ColonialTwilight::City.new('a', 'w', 0, 0)
+      a.shift :support
+      expect(rules.may_rally_in?(a)).to be false
+    end
+
+    it 'may_rally_in? not in not independent country' do
+      a = ColonialTwilight::Country.new('country')
+      expect(rules.may_rally_in?(a)).to be false
+    end
+
+    it 'may_rally_in?' do
+      a = ColonialTwilight::Sector.new('a', 'w', 0, 0)
+      expect(rules.may_rally_in?(a)).to be true
+    end
+
     it 'may place 1 FLN cube' do
-      @board.load :short
-      space = @board.by_name('Mostaganem')
-      expect(rules.max_placable_guerrillas(space)).to eq(1)
+      a = ColonialTwilight::Sector.new('a', 'w', 0, 0)
+      expect(rules.max_placable_guerrillas(a)).to eq(1)
     end
 
     it 'may place 2 FLN cube' do
-      @board.load :short
-      space = @board.by_name('Orleansville')
-      space.add :fln_base
-      expect(rules.max_placable_guerrillas(space)).to eq(4)
+      a = ColonialTwilight::Sector.new('a', 'w', 0, 2)
+      a.add :fln_base
+      expect(rules.max_placable_guerrillas(a)).to eq(3)
     end
   end
 
