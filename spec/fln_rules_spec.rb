@@ -2,6 +2,7 @@
 
 require './lib/colonial_twilight/fln_rules'
 require './lib/colonial_twilight/board'
+require './spec/mock_board'
 
 class FLNRulesImpl
   include ColonialTwilight::FLNRules
@@ -25,31 +26,39 @@ describe ColonialTwilight::FLNRules do
       expect(rules.rally_spaces(@board).size).to eq(27)
     end
 
-    it 'may_rally_in? not in city at support' do
-      a = ColonialTwilight::City.new('a', 'w', 0, 0)
-      a.shift :support
-      expect(rules.may_rally_in?(a)).to be false
-    end
-
-    it 'may_rally_in? not in not independent country' do
-      a = ColonialTwilight::Country.new('country')
-      expect(rules.may_rally_in?(a)).to be false
-    end
-
-    it 'may_rally_in?' do
-      a = ColonialTwilight::Sector.new('a', 'w', 0, 0)
+    it 'may_rally_in? sector' do
+      a = Sector.new
       expect(rules.may_rally_in?(a)).to be true
     end
 
-    it 'may place 1 FLN cube' do
-      a = ColonialTwilight::Sector.new('a', 'w', 0, 0)
+    it 'may_rally_in? in city not at support' do
+      a = Sector.new({ name: 'city', support: false })
+      expect(rules.may_rally_in?(a)).to be true
+    end
+
+    it 'may_rally_in? not in city at support' do
+      a = Sector.new({ name: 'city', support: true })
+      expect(rules.may_rally_in?(a)).to be false
+    end
+
+    it 'may_rally_in? in independent country' do
+      a = Sector.new({ name: 'country', independent: true })
+      expect(rules.may_rally_in?(a)).to be true
+    end
+
+    it 'may_rally_in? not in not independent country' do
+      a = Sector.new({ name: 'country', independent: false })
+      expect(rules.may_rally_in?(a)).to be false
+    end
+
+    it 'may place 1 guerrillas' do
+      a = Sector.new({ pop: 3 })
       expect(rules.max_placable_guerrillas(a)).to eq(1)
     end
 
-    it 'may place 2 FLN cube' do
-      a = ColonialTwilight::Sector.new('a', 'w', 0, 2)
-      a.add :fln_base
-      expect(rules.max_placable_guerrillas(a)).to eq(3)
+    it 'may place pop + base guerrillas' do
+      a = Sector.new({ pop: 3, fln_bases: 2 })
+      expect(rules.max_placable_guerrillas(a)).to eq(5)
     end
   end
 
