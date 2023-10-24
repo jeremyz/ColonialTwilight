@@ -17,4 +17,5 @@ Gem::Specification.new do |s|
     s.files       = Dir['lib/**/*.rb']
     s.executables = 'ColonialTwilight.rb'
     s.add_development_dependency 'rspec'
+    s.add_development_dependency 'simplecov'
 end
