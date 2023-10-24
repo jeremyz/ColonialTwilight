@@ -6,10 +6,11 @@ module ColonialTwilight
     def dbg(msg, ret)
       return if @debug.zero?
 
-      case @debug
-      when 1 then puts "  #{msg} : YES" if ret
-      else puts "  #{msg} : #{ret ? 'YES' : 'NO'}"
-      end
+      s = case @debug
+          when 1 then "  #{msg} : YES" if ret
+          else "  #{msg} : #{ret ? 'YES' : 'NO'}"
+          end
+      puts s unless @debug == 666
     end
 
     def pass?(board = @board)
@@ -119,13 +120,11 @@ module ColonialTwilight
     end
 
     def rally_7_priority(spaces)
-      # highest population
-      _max(spaces, :pop).shuffle
-    end
-
-    def rally_7_priority_after(spaces)
-      # in city, least terror
-      f = _filter(spaces, &:city?)
+      # highest population -> gain FLN control -> remove Gov control -> city -> least terror
+      f = _max(spaces, :pop)
+      f = _filter(f) { |s| s.gov < s.fln + place_guerrillas_in(s).values.sum }
+      f = _filter(f) { |s| s.gov == s.fln + place_guerrillas_in(s).values.sum }
+      f = _filter(f, &:city?)
       _min(f, :terror).shuffle
     end
 
@@ -170,6 +169,17 @@ module ColonialTwilight
       max_placable_guerrillas(space).clamp(0, space.fln_bases.positive? ? (space.pop + 1 - space.guerrillas) : 666)
     end
 
+    def place_guerrillas_in(space, board = @board)
+      n = max_placable_guerrillas_in?(space)
+      h = { space: 0 } # do not select space
+      n -= h[:available] = (a = board.available_fln_underground) >= n ? n : a
+      while n.positive? && !(spaces = remove_guerrillas_priority(board.spaces, h)).empty?
+        s = spaces.sample
+        n -= h[s] = (g = removable_guerrillas(s)) >= n ? n : g
+      end
+      h
+    end
+
     # 1) place: outofplay -> available | bases -> guerrillas if choice
     # 2) place: underground first unless from map then place active first flipped as underground
     # 3) march: underground -> active, unless march would activate then move active first
@@ -189,14 +199,14 @@ module ColonialTwilight
       n.positive? ? n : 0
     end
 
-    def not_selected(spaces, steps)
-      spaces.reject { |s| steps.key?(s) }
+    def not_selected(spaces, selected)
+      spaces.reject { |s| selected.key?(s) }
     end
 
     # FLNBot#_place_fln_in
-    def remove_guerrillas_priority(spaces, steps)
+    def remove_guerrillas_priority(spaces, selected)
       # 5) #removable_guerrillas then most guerrillas first
-      return [] if (l = not_selected(spaces, steps).select { |s| removable_guerrillas(s).positive? }).empty?
+      return [] if (l = not_selected(spaces, selected).select { |s| removable_guerrillas(s).positive? }).empty?
 
       _max(l, :guerrillas).shuffle
     end

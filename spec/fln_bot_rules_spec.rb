@@ -9,7 +9,7 @@ class FLNRulesImpl
   attr_writer :limited_op_only, :first_eligible, :will_be_next_first_eligible
 
   def initialize
-    @debug = 0
+    @debug = 666
     @board = Board.new
     @limited_op_only = true
     @first_eligible = true
@@ -305,29 +305,40 @@ describe ColonialTwilight::FLNBotRules do
       expect(@rules.may_rally_7_in?(a)).to be false
     end
 
-    it 'rally_7_priority_after city?' do
-      a = Sector.new({ name: 'city' })
-      b = Sector.new
-      expect(@rules.rally_7_priority_after([a, b])[0]).to be a
+    it 'rally_7_priority population' do
+      a = Sector.new({ pop: 2 })
+      b = Sector.new({ pop: 1 })
+      c = Sector.new({ pop: 1 })
+      expect(@rules.rally_7_priority([a, b, c])[0]).to be a
     end
 
-    it 'rally_7_priority_after least terror' do
+    it 'rally_7_priority gain FLN control' do
+      a = Sector.new({ gov_cubes: 2 })
+      b = Sector.new({ gov_cubes: 1, fln_active: 1 })
+      c = Sector.new({ gov_cubes: 1 })
+      @board.available_fln_underground = 1
+      expect(@rules.rally_7_priority([a, b, c])[0]).to be b
+    end
+
+    it 'rally_7_priority remove GOV control' do
+      a = Sector.new({ gov_cubes: 3 })
+      b = Sector.new({ gov_cubes: 1 })
+      c = Sector.new({ gov_cubes: 2 })
+      @board.available_fln_underground = 1
+      expect(@rules.rally_7_priority([a, b, c])[0]).to be b
+    end
+
+    it 'rally_7_priority city?' do
+      a = Sector.new({ name: 'city' })
+      b = Sector.new
+      expect(@rules.rally_7_priority([a, b])[0]).to be a
+    end
+
+    it 'rally_7_priority least terror' do
       a = Sector.new
       b = Sector.new({ name: 'city', terror: 1 })
       c = Sector.new({ name: 'city', terror: 2 })
-      expect(@rules.rally_7_priority_after([a, b, c])[0]).to be b
-    end
-
-    it 'rally_7_priority population' do
-      a = Sector.new({ pop: 2 })
-      b = Sector.new({ pop: 1 })
-      expect(@rules.rally_7_priority([a, b])[0]).to be a
-    end
-
-    it 'rally_7_priority population' do
-      a = Sector.new({ pop: 2 })
-      b = Sector.new({ pop: 1 })
-      expect(@rules.rally_7_priority([a, b])[0]).to be a
+      expect(@rules.rally_7_priority([a, b, c])[0]).to be b
     end
 
     it 'may_rally_8_in? no fln guerrillas' do
@@ -415,6 +426,16 @@ describe ColonialTwilight::FLNBotRules do
     it 'max_placable_guerrillas_in? max pop + 1' do
       a = Sector.new({ pop: 2, fln_bases: 1, fln_active: 1, fln_underground: 1 })
       expect(@rules.max_placable_guerrillas_in?(a)).to eq(1)
+    end
+
+    it 'place_guerrillas_in' do
+      a = Sector.new({ pop: 2, fln_bases: 1 })
+      @board.available_fln_underground = 1
+      @board.spaces << Sector.new({ name: 'a', fln_bases: 1, fln_active: 2, fln_underground: 1 })
+      h = @rules.place_guerrillas_in(a)
+      expect(@rules.max_placable_guerrillas_in?(a)).to eq(3)
+      expect(h[:available]).to eq(1)
+      expect(h[@board.spaces[0]]).to eq(1)
     end
 
     it 'removable_guerrillas active' do

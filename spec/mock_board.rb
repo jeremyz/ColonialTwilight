@@ -57,19 +57,33 @@ class Sector
     @data[:fln_underground] || 0
   end
 
+  def fln
+    fln_active + fln_underground + fln_bases
+  end
+
   def gov_cubes
     @data[:gov_cubes] || 0
+  end
+
+  def gov_bases
+    @data[:gov_bases] || 0
+  end
+
+  def gov
+    gov_cubes + gov_bases
   end
 end
 
 class Board
-  attr_reader :sector
-  attr_accessor :fln_resources, :available_fln_bases
+  attr_reader :sector, :spaces
+  attr_accessor :fln_resources, :available_fln_underground, :available_fln_bases
 
   def initialize
     @fln_resources = 0
     @available_fln_bases = 1
+    @available_fln_underground = 0
     @sector = Sector.new
+    @spaces = []
   end
 
   def has(&block)
