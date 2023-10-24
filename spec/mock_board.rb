@@ -4,7 +4,7 @@ class Sector
   attr_reader :name
   attr_writer :data
 
-  def initialize(data = { name: 'sector', pop: 0, fln_bases: 0, fln_active: 0, fln_underground: 0, gov_cubes: 0, independent: true, support: false, terror: false })
+  def initialize(data = { name: 'sector', pop: 0, fln_bases: 0, fln_active: 0, fln_underground: 0, gov_cubes: 0, independent: true, support: false, terror: 0 })
     @name = data[:name] || 'sector'
     @data = data
   end
@@ -33,7 +33,7 @@ class Sector
     @data[:support]
   end
 
-  def terror?
+  def terror
     @data[:terror]
   end
 

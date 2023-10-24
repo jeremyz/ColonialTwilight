@@ -367,6 +367,16 @@ describe ColonialTwilight::FLNBotRules do
   end
 
   describe '8.1.2 Procedure Guidelines' do
+    it 'available_fln_bases?' do
+      @board.available_fln_bases = 0
+      expect(@rules.available_fln_bases?).to be false
+    end
+
+    it 'available_fln_bases?' do
+      @board.available_fln_bases = 1
+      expect(@rules.available_fln_bases?).to be true
+    end
+
     it 'may_add_base_in?' do
       a = Sector.new({ fln_active: 3 })
       expect(@rules.may_add_base_in?(a)).to be true

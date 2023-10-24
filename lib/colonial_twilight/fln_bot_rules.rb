@@ -158,27 +158,30 @@ module ColonialTwilight
       spaces.select { |s| s.send(sym) == v }
     end
 
+    def available_fln_bases?(board = @board)
+      board.available_fln_bases.positive?
+    end
+
     def may_add_base_in?(space)
       space.guerrillas > 2 && (space.fln_bases < (space.country? ? space.max_bases : 1))
     end
 
     def max_placable_guerrillas_in?(space)
-      n = max_placable_guerrillas(space)
-      n = n.clamp(0, space.pop + 1 - space.guerrillas) if space.fln_bases.positive?
-      n
+      max_placable_guerrillas(space).clamp(0, space.fln_bases.positive? ? (space.pop + 1 - space.guerrillas) : 666)
     end
 
-      # 1) place: outofplay -> available | bases -> guerrillas if choice
-      # 2) place: underground first unless from map then place active first flipped as underground
-      # 3) march: underground -> active, unless march would activate then move active first
+    # 1) place: outofplay -> available | bases -> guerrillas if choice
+    # 2) place: underground first unless from map then place active first flipped as underground
+    # 3) march: underground -> active, unless march would activate then move active first
 
+    # applied as last filter in FLNBot#_place_fln
     def place_guerrillas(spaces)
       # 4) support -> with friendly pieces -> random
-      l0 = (l0 = spaces.select(&:support?)).empty? ? spaces : l0
-      l1 = (l1 = l0.select { |s| s.guerrillas.positive? }).empty? ? l0 : l1
-      l1.shuffle
+      f = _filter(spaces, &:support?)
+      _filter(f) { |s| s.guerrillas.positive? }.shuffle
     end
 
+    # FLNBot#_place_fln_in
     def removable_guerrillas(space)
       # 5) active only, leave 2 guerrillas at base or support
       a = (a = space.fln_underground) > 2 ? 2 : a
@@ -190,6 +193,7 @@ module ColonialTwilight
       spaces.reject { |s| steps.key?(s) }
     end
 
+    # FLNBot#_place_fln_in
     def remove_guerrillas_priority(spaces, steps)
       # 5) #removable_guerrillas then most guerrillas first
       return [] if (l = not_selected(spaces, steps).select { |s| removable_guerrillas(s).positive? }).empty?
@@ -197,6 +201,7 @@ module ColonialTwilight
       _max(l, :guerrillas).shuffle
     end
 
+    # not used yet
     def remove_from(space, num = 1)
       # 6) remove active -> underground -> base
       h = {}
@@ -206,12 +211,9 @@ module ColonialTwilight
       h
     end
 
-    def remove_gov(num = 1)
-      # 7) map -> availabe (base -> french -> algerian; troops -> police)
-    end
-
-      # 8) reduce : commitment -> support -> france track -> gov resource
-      # 9) shift : support -> oppose | best combined; remove terror only if also shift
-      # 10) random
+    # 7) remove gov : map -> availabe (base -> french -> algerian; troops -> police)
+    # 8) reduce : commitment -> support -> france track -> gov resource
+    # 9) shift : support -> oppose | best combined; remove terror only if also shift
+    # 10) random
   end
 end
