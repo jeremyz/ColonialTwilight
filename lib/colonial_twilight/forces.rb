@@ -103,15 +103,16 @@ module ColonialTwilight
     end
 
     def add(type, num = 1)
+      type = :fln_underground if name == :available && type == :fln_active
       case type
       when :french_troops then @french_troops += num
       when :french_police then @french_police += num
       when :algerian_troops then @algerian_troops += num
       when :algerian_police then @algerian_police += num
       when :fln_underground then @fln_underground += num
-      when :fln_active then @fln_active.nil? ? @fln_underground += num : @fln_active += num
-      when :gov_base then add_base(:gov_base, num)
-      when :fln_base then add_base(:fln_base, num)
+      when :fln_active then @fln_active += num
+      when :gov_bases then add_base(type, num)
+      when :fln_bases then add_base(type, num)
       else
         raise "unknown force type : #{type}"
       end
@@ -125,8 +126,8 @@ module ColonialTwilight
         raise "too much bases in #{@name} (#{bases} + #{num}) > #{@max_bases}"
       end
 
-      @gov_bases += num if type == :gov_base
-      @fln_bases += num if type == :fln_base
+      @gov_bases += num if type == :gov_bases
+      @fln_bases += num if type == :fln_bases
     end
 
     def update_control
