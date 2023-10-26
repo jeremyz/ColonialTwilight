@@ -265,8 +265,20 @@ describe ColonialTwilight::FLNBotRules do
       expect(@rules.may_rally_6_in?(a, false)).to be false
     end
 
-    it 'may_rally_6_in? pop 1+' do
-      a = Sector.new({ pop: 2 })
+    it 'may_rally_6_in? pop 2+ but no base, no control after' do
+      a = Sector.new({ pop: 2, gov_cubes: 1 })
+      @board.available_fln_underground = 1
+      expect(@rules.may_rally_6_in?(a, false)).to be false
+    end
+
+    it 'may_rally_6_in? pop 2+ and base' do
+      a = Sector.new({ pop: 2, gov_cubes: 6, fln_bases: 1 })
+      expect(@rules.may_rally_6_in?(a, false)).to be true
+    end
+
+    it 'may_rally_6_in? pop 2+ and control' do
+      a = Sector.new({ pop: 2, gov_cubes: 1, fln_active: 1 })
+      @board.available_fln_underground = 1
       expect(@rules.may_rally_6_in?(a, false)).to be true
     end
 

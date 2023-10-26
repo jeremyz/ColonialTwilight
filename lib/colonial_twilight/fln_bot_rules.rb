@@ -100,6 +100,11 @@ module ColonialTwilight
     def may_rally_6_in?(space, already_rallied)
       # 2+ pop to agitate after rally
       r = (already_rallied || may_rally_in?(space)) && space.pop > 1
+      if r
+        # to agitate : FLN base or control after rally
+        n = already_rallied ? 0 : place_guerrillas_in(space).values.sum
+        r &= (space.fln_bases.positive? || (space.gov < (space.fln + n)))
+      end
       dbg "  may_rally_6_in : #{space.name}", r
       r
     end
