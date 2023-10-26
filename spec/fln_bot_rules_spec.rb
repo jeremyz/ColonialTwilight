@@ -6,10 +6,10 @@ require './spec/mock_board'
 class FLNRulesImpl
   include ColonialTwilight::FLNBotRules
   attr_reader :board
-  attr_writer :limited_op_only, :first_eligible, :will_be_next_first_eligible
+  attr_writer :debug, :limited_op_only, :first_eligible, :will_be_next_first_eligible
 
   def initialize
-    @debug = 666
+    @debug = 0
     @board = Board.new
     @limited_op_only = true
     @first_eligible = true
@@ -42,6 +42,18 @@ describe ColonialTwilight::FLNBotRules do
   before do
     @rules = FLNRulesImpl.new
     @board = @rules.board
+  end
+
+  describe 'Debug' do
+    it 'level 1' do
+      @rules.debug = 1
+      expect { @rules.dbg('msg', true) }.to output("  msg : YES\n").to_stdout
+    end
+
+    it 'level 2' do
+      @rules.debug = 2
+      expect { @rules.dbg('msg', false) }.to output("  msg : NO\n").to_stdout
+    end
   end
 
   describe 'Pass' do

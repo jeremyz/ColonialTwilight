@@ -6,11 +6,10 @@ module ColonialTwilight
     def dbg(msg, ret)
       return if @debug.zero?
 
-      s = case @debug
-          when 1 then "  #{msg} : YES" if ret
-          else "  #{msg} : #{ret ? 'YES' : 'NO'}"
-          end
-      puts s unless @debug == 666
+      case @debug
+      when 1 then puts "  #{msg} : YES" if ret
+      else puts "  #{msg} : #{ret ? 'YES' : 'NO'}"
+      end
     end
 
     def pass?(board = @board)
