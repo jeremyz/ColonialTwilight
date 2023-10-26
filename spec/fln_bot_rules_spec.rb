@@ -450,19 +450,19 @@ describe ColonialTwilight::FLNBotRules do
       expect(h[@board.spaces[0]]).to eq(1)
     end
 
-    it 'removable_guerrillas active' do
+    it '_removable_guerrillas active' do
       a = Sector.new({ fln_active: 2, fln_underground: 3 })
-      expect(@rules.removable_guerrillas(a)).to eq(2)
+      expect(@rules._removable_guerrillas(a)).to eq(2)
     end
 
-    it 'removable_guerrillas leave 2 at support' do
+    it '_removable_guerrillas leave 2 at support' do
       a = Sector.new({ support: true, fln_active: 3 })
-      expect(@rules.removable_guerrillas(a)).to eq(1)
+      expect(@rules._removable_guerrillas(a)).to eq(1)
     end
 
-    it 'removable guerrillas leave 2 at bases' do
+    it '_removable guerrillas leave 2 at bases' do
       a = Sector.new({ fln_bases: 1, fln_active: 3, fln_underground: 1 })
-      expect(@rules.removable_guerrillas(a)).to eq(2)
+      expect(@rules._removable_guerrillas(a)).to eq(2)
     end
 
     it 'place_guerrillas support' do
@@ -479,18 +479,18 @@ describe ColonialTwilight::FLNBotRules do
       expect(@rules.place_guerrillas([a, b, c])[0]).to be b
     end
 
-    it 'remove_guerrillas_priority none' do
+    it '_remove_guerrillas_priority none' do
       a = Sector.new
       b = Sector.new
-      expect(@rules.remove_guerrillas_priority([a, b], {}).empty?).to be true
+      expect(@rules._remove_guerrillas_priority([a, b], {}).empty?).to be true
     end
 
-    it 'remove_guerrillas_priority most guerrillas' do
+    it '_remove_guerrillas_priority most guerrillas' do
       a = Sector.new({ fln_active: 2, fln_underground: 1 })
       b = Sector.new({ fln_active: 2, fln_underground: 2 })
       c = Sector.new({ fln_active: 1, fln_underground: 2 })
       d = Sector.new({ fln_active: 3, fln_underground: 2 })
-      expect(@rules.remove_guerrillas_priority([a, b, c, d], { d => true })[0]).to be b
+      expect(@rules._remove_guerrillas_priority([a, b, c, d], { d => true })[0]).to be b
     end
 
     it 'remove_from all' do

@@ -82,7 +82,7 @@ module ColonialTwilight
       f = _filter(spaces) { |s| !s.country? }
       f = _filter(f) { |s| s.gov_cubes.positive? }
       f = _filter(f) { |s| s.pop.positive? }
-      _min(f, :fln_underground).shuffle
+      _min(f, :fln_underground)
     end
 
     def may_rally_5_in?(space)
@@ -94,7 +94,7 @@ module ColonialTwilight
 
     def rally_5_priority(spaces)
       # highest population
-      _max(spaces, :pop).shuffle
+      _max(spaces, :pop)
     end
 
     def may_rally_6_in?(space, already_rallied)
@@ -113,9 +113,8 @@ module ColonialTwilight
       # max pop, min terror, support : reference ?
       f = _max(spaces, :pop)
       f = _min(f, :terror)
-      f = _filter(f, &:support?)
+      _filter(f, &:support?)
       # FIXME: maybe already selected first, or not
-      f.shuffle
     end
 
     def may_rally_7_in?(space)
@@ -130,7 +129,7 @@ module ColonialTwilight
       f = _filter(f) { |s| s.gov < s.fln + place_guerrillas_in(s).values.sum }
       f = _filter(f) { |s| s.gov == s.fln + place_guerrillas_in(s).values.sum }
       f = _filter(f, &:city?)
-      _min(f, :terror).shuffle
+      _min(f, :terror)
     end
 
     def may_rally_8_in?(space)
@@ -143,7 +142,7 @@ module ColonialTwilight
       # Algeria -> most Guerrillas -> no gov cubes
       f = _filter(spaces) { |s| !s.country? }
       f = _max(f, :guerrillas)
-      _filter(f) { |s| s.gov_cubes.zero? }.shuffle
+      _filter(f) { |s| s.gov_cubes.zero? }
     end
 
     # 8.1.2 - Procedure Guidelines
@@ -178,9 +177,9 @@ module ColonialTwilight
       n = max_placable_guerrillas_in?(space)
       h = { space: 0 } # do not select space
       n -= h[:available] = (a = board.available_fln_underground) >= n ? n : a
-      while n.positive? && !(spaces = remove_guerrillas_priority(board.spaces, h)).empty?
+      while n.positive? && !(spaces = _remove_guerrillas_priority(board.spaces, h)).empty?
         s = spaces.sample
-        n -= h[s] = (g = removable_guerrillas(s)) >= n ? n : g
+        n -= h[s] = (g = _removable_guerrillas(s)) >= n ? n : g
       end
       h
     end
@@ -193,25 +192,25 @@ module ColonialTwilight
     def place_guerrillas(spaces)
       # 4) support -> with friendly pieces -> random
       f = _filter(spaces, &:support?)
-      _filter(f) { |s| s.guerrillas.positive? }.shuffle
+      _filter(f) { |s| s.guerrillas.positive? }
     end
 
-    # FLNBot#_place_fln_in
-    def removable_guerrillas(space)
+    # place_guerrillas_in
+    def _removable_guerrillas(space)
       # 5) active only, leave 2 guerrillas at base or support
       a = (a = space.fln_underground) > 2 ? 2 : a
       n = space.fln_active - (space.support? || space.fln_bases.positive? ? (2 - a) : 0)
       n.positive? ? n : 0
     end
 
-    def not_selected(spaces, selected)
+    def _not_selected(spaces, selected)
       spaces.reject { |s| selected.key?(s) }
     end
 
-    # FLNBot#_place_fln_in
-    def remove_guerrillas_priority(spaces, selected)
+    # place_guerrillas_in
+    def _remove_guerrillas_priority(spaces, selected)
       # 5) #removable_guerrillas then most guerrillas first
-      return [] if (l = not_selected(spaces, selected).select { |s| removable_guerrillas(s).positive? }).empty?
+      return [] if (l = _not_selected(spaces, selected).select { |s| _removable_guerrillas(s).positive? }).empty?
 
       _max(l, :guerrillas).shuffle
     end
