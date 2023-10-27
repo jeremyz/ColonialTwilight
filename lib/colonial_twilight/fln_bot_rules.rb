@@ -180,7 +180,7 @@ module ColonialTwilight
         s = spaces.sample
         n -= h[s] = (g = _removable_guerrillas(s)) >= n ? n : g
       end
-      h
+      h.reject { |_k, v| v.zero? }
     end
 
     # 1) place: outofplay -> available | bases -> guerrillas if choice
