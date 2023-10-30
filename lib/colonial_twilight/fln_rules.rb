@@ -24,6 +24,10 @@ module ColonialTwilight
       space.fln_bases.positive? ? space.fln_bases + space.pop : 1
     end
 
+    def max_agitate_cost(space)
+      space.terror + (space.oppose? ? 0 : 1)
+    end
+
     # March 3.3.2
 
     # Attack 3.3.3

@@ -72,6 +72,16 @@ describe ColonialTwilight::FLNRules do
       # 4 with bases + 1 in fln control : but only 1 without fln control
       expect(rules.agitate_spaces(@board).size).to eq(1)
     end
+
+    it 'compute agitate cost terror and shift' do
+      a = Sector.new(terror: 2)
+      expect(rules.max_agitate_cost(a)).to eq(3)
+    end
+
+    it 'compute agitate terror' do
+      a = Sector.new(terror: 1, oppose: true)
+      expect(rules.max_agitate_cost(a)).to eq(1)
+    end
   end
 
   describe 'Attack' do
