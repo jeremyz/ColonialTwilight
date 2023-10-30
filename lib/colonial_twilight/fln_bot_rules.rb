@@ -69,7 +69,7 @@ module ColonialTwilight
     end
 
     def may_rally_3_in?(space)
-      # at FLN bases, with 2- FLN underground or 0 fln_undergroud in country or 0 pop
+      # at FLN bases, with 2- FLN underground or 0 fln_underground in country or 0 pop
       r = may_rally_in?(space) && !space.fln_bases.zero? &&
           (space.country? || space.pop.zero? ? space.fln_underground.zero? : space.fln_underground < 2)
       dbg "  may_rally_3_in : #{space.name}", r
@@ -180,7 +180,7 @@ module ColonialTwilight
         s = spaces.sample
         n -= h[s] = (g = _removable_guerrillas(s)) >= n ? n : g
       end
-      h.reject { |_k, v| v.zero? }
+      h.reject { |_k, v| v.zero? } # FIXME in empty? maybe hide active guerrillas ?
     end
 
     # 1) place: outofplay -> available | bases -> guerrillas if choice
