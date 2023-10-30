@@ -38,7 +38,7 @@ class Sector
   end
 
   def terror
-    @data[:terror]
+    @data[:terror] || 0
   end
 
   def pop
@@ -75,6 +75,14 @@ class Sector
 
   def gov
     gov_cubes + gov_bases
+  end
+
+  def fln_control?
+    fln > gov
+  end
+
+  def gov_control?
+    gov < fln
   end
 end
 
