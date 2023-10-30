@@ -69,8 +69,8 @@ describe ColonialTwilight::FLNRules do
 
     it 'collects spaces where operation can be conducted' do
       @board.load :short
-      # 6 with bases + 1 in fln control
-      expect(rules.agitate_spaces(@board).size).to eq(5)
+      # 4 with bases + 1 in fln control : but only 1 without fln control
+      expect(rules.agitate_spaces(@board).size).to eq(1)
     end
   end
 

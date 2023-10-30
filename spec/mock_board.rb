@@ -30,7 +30,11 @@ class Sector
   end
 
   def support?
-    @data[:support]
+    @data[:support] || false
+  end
+
+  def oppose?
+    @data[:oppose] || false
   end
 
   def terror

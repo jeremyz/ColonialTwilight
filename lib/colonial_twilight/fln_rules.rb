@@ -13,7 +13,7 @@ module ColonialTwilight
     end
 
     def may_agitate_in?(space)
-      !space.country? && (space.fln_control? || space.fln_bases.positive?)
+      !space.country? && (space.fln_control? || space.fln_bases.positive?) && (space.terror.positive? || !space.oppose?)
     end
 
     def agitate_spaces(board)
