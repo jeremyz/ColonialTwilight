@@ -50,8 +50,7 @@ module ColonialTwilight
 
     # Extort 4.3.1
     def may_extort_in?(space)
-      !space.pop.zero? && space.fln_underground.positive? && space.fln_control? &&
-        (space.country? ? space.independent? : true)
+      space.fln_underground.positive? && (space.country? ? space.independent? : !space.pop.zero? && space.fln_control?)
     end
 
     def extort_spaces(board)

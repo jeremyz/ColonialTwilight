@@ -116,8 +116,8 @@ describe ColonialTwilight::FLNRules do
 
     it 'collects spaces where operation can be conducted' do
       @board.load :short
-      # 2 sectors
-      expect(rules.extort_spaces(@board).size).to eq(2)
+      # 2 sectors + 2 countries
+      expect(rules.extort_spaces(@board).size).to eq(4)
     end
   end
 
