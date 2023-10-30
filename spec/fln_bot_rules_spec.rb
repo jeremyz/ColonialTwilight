@@ -294,6 +294,18 @@ describe ColonialTwilight::FLNBotRules do
       expect(@rules.may_rally_6_in?(a, false)).to be true
     end
 
+    it 'may_rally_6_in? pop 2+ and control but oppose' do
+      a = Sector.new(pop: 2, gov_cubes: 1, fln_active: 1, oppose: true)
+      @board.available_fln_underground = 1
+      expect(@rules.may_rally_6_in?(a, false)).to be false
+    end
+
+    it 'may_rally_6_in? pop 2+ and control but oppose but terror' do
+      a = Sector.new(pop: 2, gov_cubes: 1, fln_active: 1, oppose: true, terror: 1)
+      @board.available_fln_underground = 1
+      expect(@rules.may_rally_6_in?(a, false)).to be true
+    end
+
     it 'rally_6_priority population' do
       a = Sector.new(pop: 2)
       b = Sector.new(pop: 1)
