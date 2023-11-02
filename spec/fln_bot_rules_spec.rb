@@ -489,18 +489,18 @@ describe ColonialTwilight::FLNBotRules do
       expect(@rules._removable_guerrillas(a)).to eq(2)
     end
 
-    it 'place_guerrillas support' do
+    it 'place_guerrillas_priority support' do
       a = Sector.new(support: false)
       b = Sector.new(support: true)
       c = Sector.new(support: false)
-      expect(@rules.place_guerrillas([a, b, c])[0]).to be b
+      expect(@rules.place_guerrillas_priority([a, b, c])[0]).to be b
     end
 
-    it 'place_guerrillas support and fln_active' do
+    it 'place_guerrillas_priority support and fln_active' do
       a = Sector.new(support: false)
       b = Sector.new(support: true, fln_active: 1)
       c = Sector.new(support: true)
-      expect(@rules.place_guerrillas([a, b, c])[0]).to be b
+      expect(@rules.place_guerrillas_priority([a, b, c])[0]).to be b
     end
 
     it '_remove_guerrillas_priority none' do

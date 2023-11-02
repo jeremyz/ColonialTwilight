@@ -187,8 +187,8 @@ module ColonialTwilight
     # 2) place: underground first unless from map then place active first flipped as underground
     # 3) march: underground -> active, unless march would activate then move active first
 
-    # applied as last filter in FLNBot#_place_fln
-    def place_guerrillas(spaces)
+    # applied as last filter in FLNBot#_priority
+    def place_guerrillas_priority(spaces)
       # 4) support -> with friendly pieces -> random
       f = _filter(spaces, &:support?)
       _filter(f) { |s| s.guerrillas.positive? }
