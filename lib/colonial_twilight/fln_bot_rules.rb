@@ -7,7 +7,7 @@ module ColonialTwilight
       return if @debug.zero?
 
       case @debug
-      when 1 then puts "  #{msg} : YES" if ret
+      when 1 then puts "  #{msg}" if ret
       else puts "  #{msg} : #{ret ? 'YES' : 'NO'}"
       end
     end

@@ -47,7 +47,7 @@ describe ColonialTwilight::FLNBotRules do
   describe 'Debug' do
     it 'level 1' do
       @rules.debug = 1
-      expect { @rules.dbg('msg', true) }.to output("  msg : YES\n").to_stdout
+      expect { @rules.dbg('msg', true) }.to output("  msg\n").to_stdout
     end
 
     it 'level 2' do
