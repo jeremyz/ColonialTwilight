@@ -413,6 +413,64 @@ describe ColonialTwilight::FLNBotRules do
     end
   end
 
+  describe 'Extort' do
+    it 'may_extort_0_in?' do
+      a = Sector.new
+      expect(@rules.may_extort_0_in?(a)).to be false
+    end
+
+    it 'may_extort_0_in? pop' do
+      a = Sector.new(pop: 1)
+      expect(@rules.may_extort_0_in?(a)).to be false
+    end
+
+    it 'may_extort_0_in? pop and underground' do
+      a = Sector.new(pop: 1, fln_underground: 1)
+      expect(@rules.may_extort_0_in?(a)).to be true
+    end
+
+    it 'may_extort_0_in? pop and guerrillas but active' do
+      a = Sector.new(pop: 1, fln_active: 1)
+      expect(@rules.may_extort_0_in?(a)).to be false
+    end
+
+    it 'may_extort_0_in? pop and underground but no control' do
+      a = Sector.new(pop: 1, fln_underground: 1, gov_cubes: 2)
+      expect(@rules.may_extort_0_in?(a)).to be false
+    end
+
+    it 'may_extort_0_in? pop and underground but base' do
+      a = Sector.new(pop: 1, fln_underground: 1, fln_bases: 1)
+      expect(@rules.may_extort_0_in?(a)).to be false
+    end
+
+    it 'may_extort_0_in? pop, base and enough underground' do
+      a = Sector.new(pop: 1, fln_underground: 2, fln_bases: 1, gov_cubes: 2)
+      expect(@rules.may_extort_0_in?(a)).to be true
+    end
+
+    it 'extort_priority 2+' do
+      a = Sector.new(fln_underground: 1)
+      b = Sector.new(fln_underground: 2)
+      c = Sector.new(fln_underground: 1)
+      expect(@rules.extort_priority([a, b, c])[0]).to be b
+    end
+
+    it 'extort_priority 3+ if fln bases and gov cubes' do
+      a = Sector.new(fln_underground: 2, fln_bases: 1, gov_cubes: 1)
+      b = Sector.new(fln_underground: 3, fln_bases: 1, gov_cubes: 1)
+      c = Sector.new(fln_underground: 2, fln_bases: 1, gov_cubes: 1)
+      expect(@rules.extort_priority([a, b, c])[0]).to be b
+    end
+
+    it 'extort_priority country' do
+      a = Sector.new(fln_underground: 2, fln_bases: 1, gov_cubes: 1)
+      b = Sector.new(fln_underground: 3, fln_bases: 1, gov_cubes: 1, type: :country)
+      c = Sector.new(fln_underground: 3, fln_bases: 1, gov_cubes: 1)
+      expect(@rules.extort_priority([a, b, c])[0]).to be b
+    end
+  end
+
   describe '8.1.2 Procedure Guidelines' do
     it 'available_fln_bases?' do
       @board.available_fln_bases = 0

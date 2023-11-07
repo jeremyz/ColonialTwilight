@@ -144,6 +144,20 @@ module ColonialTwilight
       _filter(f) { |s| s.gov_cubes.zero? }
     end
 
+    # Extort
+
+    def may_extort_0_in?(space)
+      r = may_extort_in?(space) && space.fln_underground > (space.fln_bases.zero? ? 0 : 1)
+      dbg "  may_extort_0_in : #{space.name}", r
+      r
+    end
+
+    def extort_priority(spaces)
+      # 2+ guerrillas, 3+ if gov cubes and fln base -> Country -> anywhere if still at 0
+      f = _filter(spaces) { |s| s.guerrillas > (s.gov_cubes.positive? && s.fln_bases.positive? ? 2 : 1) }
+      _filter(f, &:country?)
+    end
+
     # 8.1.2 - Procedure Guidelines
 
     def _filter(spaces, &block)
