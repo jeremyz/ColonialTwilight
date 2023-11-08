@@ -146,9 +146,19 @@ module ColonialTwilight
       @forces.add(type, num)
     end
 
+    def shift_terror(num = 1)
+      @terror += num
+
+      raise "terror cant be negative" if @terror.negative?
+    end
+
+    def resettled?
+      @resettled
+    end
+
     def resettle!
       raise "can't resettle a country " if country?
-      raise "can't resettle a sector with a population > 1" if @pop != 1
+      raise "can't resettle a sector with a population =! 1" if @pop != 1
 
       @pop = 0
       @resettled = true
