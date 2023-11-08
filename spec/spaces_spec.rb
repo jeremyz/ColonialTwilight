@@ -94,14 +94,14 @@ describe ColonialTwilight::Sector do
   end
 
   it 'shift alignment toward oppose' do
-    @s.shift :oppose
+    expect(@s.shift(:oppose)).to be :oppose
     expect(@s.oppose?).to be true
     expect(@s.neutral?).to be false
     expect(@s.support?).to be false
   end
 
   it 'shift alignment toward support' do
-    @s.shift :support
+    expect(@s.shift(:support)).to be :support
     expect(@s.oppose?).to be false
     expect(@s.neutral?).to be false
     expect(@s.support?).to be true
@@ -163,7 +163,7 @@ describe ColonialTwilight::Country do
 
   it 'independent' do
     expect(@c.independent?).to be false
-    @c.independent!
+    expect(@c.independent!).to be true
     expect(@c.independent?).to be true
   end
 end

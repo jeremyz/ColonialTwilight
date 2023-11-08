@@ -219,6 +219,7 @@ module ColonialTwilight
     def independent!
       @independent = true
       @descr.gsub!(/French/, 'Independent')
+      @independent
     end
   end
 end
