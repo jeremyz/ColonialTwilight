@@ -147,9 +147,9 @@ module ColonialTwilight
     end
 
     def shift_terror(num = 1)
-      @terror += num
+      raise "terror cant be negative" if @terror.zero? and num.negative?
 
-      raise "terror cant be negative" if @terror.negative?
+      @terror += num
     end
 
     def resettled?

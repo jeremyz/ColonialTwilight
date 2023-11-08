@@ -80,7 +80,7 @@ describe ColonialTwilight::Sector do
   it 'terror' do
     expect(@s.terror?).to be false
     expect(@s.terror).to eq 0
-    @s.shift_terror 2
+    expect(@s.shift_terror(2)).to eq 2
     expect(@s.terror?).to be true
     expect(@s.terror).to eq 2
     expect { @t.shift_terrort(-3) }.to raise_error(Exception)
