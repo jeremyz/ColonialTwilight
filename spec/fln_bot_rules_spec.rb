@@ -411,6 +411,48 @@ describe ColonialTwilight::FLNBotRules do
       c = Sector.new(fln_active: 1, fln_underground: 1, gov_cubes: 1)
       expect(@rules.rally_8_priority([a, b, c])[0]).to be b
     end
+
+    it 'may_rally_9_in? no control and no base' do
+      a = Sector.new(terror: 2)
+      expect(@rules.may_rally_9_in?(a)).to be false
+    end
+
+    it 'may_rally_9_in? has control but no terror and oppose' do
+      a = Sector.new(fln_active: 1, oppose: true)
+      expect(@rules.may_rally_9_in?(a)).to be false
+    end
+
+    it 'may_rally_9_in? has base but no terror and oppose' do
+      a = Sector.new(fln_bases: 1, gov_cubes: 1, oppose: true)
+      expect(@rules.may_rally_9_in?(a)).to be false
+    end
+
+    it 'may_rally_9_in? has control and terror' do
+      a = Sector.new(fln_active: 1, terror: 1)
+      expect(@rules.may_rally_9_in?(a)).to be true
+    end
+
+    it 'may_rally_9_in? has base and terror' do
+      a = Sector.new(fln_bases: 1, gov_cubes: 1, terror: 1)
+      expect(@rules.may_rally_9_in?(a)).to be true
+    end
+
+    it 'may_rally_9_in? has control and not oppose' do
+      a = Sector.new(fln_active: 1, terror: 1)
+      expect(@rules.may_rally_9_in?(a)).to be true
+    end
+
+    it 'may_rally_9_in? has base and not oppose' do
+      a = Sector.new(fln_bases: 1, gov_cubes: 1, terror: 1)
+      expect(@rules.may_rally_9_in?(a)).to be true
+    end
+
+    it 'rally_9_priority no cubes' do
+      a = Sector.new(terror: 1, oppose: true)
+      b = Sector.new(terror: 1, neutral: true)
+      c = Sector.new(terror: 2, neutral: true)
+      expect(@rules.rally_9_priority([a, b, c], 2)[0]).to be b
+    end
   end
 
   describe 'Extort' do

@@ -37,6 +37,10 @@ class Sector
     @data[:oppose] || false
   end
 
+  def neutral?
+    @data[:neutral] || false
+  end
+
   def terror
     @data[:terror] || 0
   end

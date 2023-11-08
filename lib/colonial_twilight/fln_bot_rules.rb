@@ -144,6 +144,16 @@ module ColonialTwilight
       _filter(f) { |s| s.gov_cubes.zero? }
     end
 
+    def may_rally_9_in?(space)
+      r = may_agitate_in?(space) && (space.terror.positive? || !space.oppose?)
+      dbg "  may_rally_9_in : #{space.name}", r
+      r
+    end
+
+    def rally_9_priority(spaces, resources)
+      _filter(spaces) { |s| !s.oppose? && resources > s.terror }
+    end
+
     # Extort
 
     def may_extort_0_in?(space)
