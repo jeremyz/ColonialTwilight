@@ -231,7 +231,7 @@ module ColonialTwilight
         s = spaces.sample
         n -= h[s] = (g = _removable_guerrillas(s)) >= n ? n : g
       end
-      h.reject { |_k, v| v.zero? } # FIXME in empty? maybe hide active guerrillas ?
+      h.reject { |_k, v| v.zero? } # FIXME: in empty? maybe hide active guerrillas ?
     end
 
     def pick_guerrillas_from(board = @board)
@@ -264,11 +264,11 @@ module ColonialTwilight
     end
 
     # place_guerrillas_in
-    def _remove_guerrillas_priority(spaces, selected)
+    def _remove_guerrillas_priority(spaces, selected = {})
       # 5) #removable_guerrillas then most guerrillas first
       return [] if (l = _not_selected(spaces, selected).select { |s| _removable_guerrillas(s).positive? }).empty?
 
-      _max(l, :guerrillas).shuffle
+      _max(l, :guerrillas)
     end
 
     # not used yet
