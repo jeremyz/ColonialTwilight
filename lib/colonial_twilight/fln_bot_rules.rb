@@ -192,15 +192,21 @@ module ColonialTwilight
     # 8.1.2 - Procedure Guidelines
 
     def _filter(spaces, &block)
+      return spaces if spaces.empty?
+
       (f = spaces.select(&block)).empty? ? spaces : f
     end
 
     def _max(spaces, sym)
+      return spaces if spaces.empty?
+
       v = spaces.max { |a, b| a.send(sym) <=> b.send(sym) }.send(sym)
       spaces.select { |s| s.send(sym) == v }
     end
 
     def _min(spaces, sym)
+      return spaces if spaces.empty?
+
       v = spaces.min { |a, b| a.send(sym) <=> b.send(sym) }.send(sym)
       spaces.select { |s| s.send(sym) == v }
     end
