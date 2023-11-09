@@ -513,6 +513,40 @@ describe ColonialTwilight::FLNBotRules do
     end
   end
 
+  describe 'Subvert' do
+    it 'may_subvert_1_in?' do
+      a = Sector.new
+      expect(@rules.may_subvert_1_in?(a, 2)).to be false
+    end
+
+    it 'may_subvert_1_in?' do
+      a = Sector.new(fln_underground: 1, algerian_police: 1)
+      expect(@rules.may_subvert_1_in?(a, 2)).to be true
+    end
+
+    it 'may_subvert_1_in?' do
+      a = Sector.new(fln_underground: 1, algerian_police: 3)
+      expect(@rules.may_subvert_1_in?(a, 2)).to be false
+    end
+
+    it 'subvert_1_priority algerian police' do
+      a = Sector.new(fln_underground: 1, algerian_police: 1)
+      b = Sector.new(fln_underground: 1, algerian_police: 3)
+      c = Sector.new(fln_underground: 1, algerian_police: 2)
+      expect(@rules.subvert_1_priority([a, b, c])[0]).to be b
+    end
+
+    it 'may_subvert_2_in?' do
+      a = Sector.new(fln_underground: 1)
+      expect(@rules.may_subvert_2_in?(a)).to be false
+    end
+
+    it 'may_subvert_2_in?' do
+      a = Sector.new(fln_underground: 1, algerian_police: 1)
+      expect(@rules.may_subvert_2_in?(a)).to be true
+    end
+  end
+
   describe '8.1.2 Procedure Guidelines' do
     it 'available_fln_bases?' do
       @board.available_fln_bases = 0

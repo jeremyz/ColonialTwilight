@@ -168,6 +168,27 @@ module ColonialTwilight
       _filter(f, &:country?)
     end
 
+    # Subvert
+
+    def may_subvert_1_in?(space, num)
+      # to remove last cubes
+      r = may_subvert_in?(space) && (space.french_cubes.zero? && space.algerian_cubes <= num)
+      dbg "  may_subvert_1_in : #{space.name}", r
+      r
+    end
+
+    def subvert_1_priority(spaces)
+      # Police -> Troop
+      _max(spaces, :algerian_police)
+    end
+
+    def may_subvert_2_in?(space)
+      # to replace 1 Algerian Police
+      r = may_subvert_in?(space) && space.algerian_police.positive?
+      dbg "  may_subvert_2_in : #{space.name}", r
+      r
+    end
+
     # 8.1.2 - Procedure Guidelines
 
     def _filter(spaces, &block)
