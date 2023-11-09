@@ -651,6 +651,13 @@ describe ColonialTwilight::FLNBotRules do
       expect(@rules._remove_guerrillas_priority([a, b, c, d], { d => true })[0]).to be b
     end
 
+    it 'pick guerrillas from most guerrillas' do
+      @rules.board.spaces << Sector.new(fln_active: 2, fln_underground: 1)
+      @rules.board.spaces << (b = Sector.new(fln_active: 2, fln_underground: 2))
+      @rules.board.spaces << Sector.new(fln_active: 1, fln_underground: 2)
+      expect(@rules.pick_guerrillas_from(@rules.board)).to be b
+    end
+
     it 'remove_from all' do
       a = Sector.new(fln_active: 2, fln_underground: 1, fln_bases: 1)
       h = @rules.remove_from(a, 6)

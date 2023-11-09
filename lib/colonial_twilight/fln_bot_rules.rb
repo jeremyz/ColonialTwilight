@@ -234,6 +234,12 @@ module ColonialTwilight
       h.reject { |_k, v| v.zero? } # FIXME in empty? maybe hide active guerrillas ?
     end
 
+    def pick_guerrillas_from(board = @board)
+      return :available if board.available_fln_underground.positive?
+
+      _remove_guerrillas_priority(board.spaces).sample
+    end
+
     # 1) place: outofplay -> available | bases -> guerrillas if choice
     # 2) place: underground first unless from map then place active first flipped as underground
     # 3) march: underground -> active, unless march would activate then move active first
