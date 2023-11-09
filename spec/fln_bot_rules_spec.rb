@@ -608,6 +608,15 @@ describe ColonialTwilight::FLNBotRules do
       expect(h[@board.spaces[0]]).to eq(1)
     end
 
+    it 'place_guerrillas_in' do
+      a = Sector.new(pop: 2, fln_bases: 1)
+      @board.available_fln_underground = 0
+      h = @rules.place_guerrillas_in(a)
+      expect(@rules.max_placable_guerrillas_in?(a)).to eq(3)
+      expect(h[:available]).to be nil
+      expect(h.empty?).to be true
+    end
+
     it '_removable_guerrillas active' do
       a = Sector.new(fln_active: 2, fln_underground: 3)
       expect(@rules._removable_guerrillas(a)).to eq(2)
