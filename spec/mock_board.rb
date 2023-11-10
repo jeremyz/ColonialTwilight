@@ -45,6 +45,10 @@ class Sector
     @data[:terror] || 0
   end
 
+  def terror?
+    terror.positive?
+  end
+
   def pop
     @data[:pop] || 0
   end
@@ -70,7 +74,7 @@ class Sector
   end
 
   def gov_cubes
-    @data[:gov_cubes] || 0
+    @data[:gov_cubes] || (french_cubes + algerian_cubes)
   end
 
   def gov_bases
@@ -81,12 +85,44 @@ class Sector
     gov_cubes + gov_bases
   end
 
+  def troops
+    @data[:troops] || (french_troops + algerian_troops)
+  end
+
+  def police
+    @data[:police] || (french_police + algerian_police)
+  end
+
+  def french_cubes
+    french_police + french_troops
+  end
+
+  def french_police
+    @data[:french_police] || 0
+  end
+
+  def french_troops
+    @data[:french_troops] || 0
+  end
+
+  def algerian_cubes
+    algerian_police + algerian_troops
+  end
+
+  def algerian_police
+    @data[:algerian_police] || 0
+  end
+
+  def algerian_troops
+    @data[:algerian_troops] || 0
+  end
+
   def fln_control?
     fln > gov
   end
 
   def gov_control?
-    gov < fln
+    gov > fln
   end
 end
 
