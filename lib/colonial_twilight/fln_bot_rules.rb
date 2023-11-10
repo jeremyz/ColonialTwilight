@@ -189,6 +189,35 @@ module ColonialTwilight
       r
     end
 
+    # Terror
+
+    def may_terror_1_in?(space)
+      # to remove support, do not active last underground at bases
+      r = may_terror_in?(space) && space.support? && space.fln_underground > (space.fln_bases.positive? ? 1 : 0)
+      dbg "  may_terror_1_in : #{space.name}", r
+      r
+    end
+
+    def terror_1_priority(spaces)
+      # highest population
+      _max(spaces, :pop)
+    end
+
+    def may_terror_2_in?(space, de_gaule: false)
+      # neutral and no terror and pacifiable, do not active last underground at bases
+      r = may_terror_in?(space) && space.neutral? && !space.terror? && _pacifiable(space, de_gaule) &&
+          space.fln_underground > (space.fln_bases.positive? ? 1 : 0)
+      dbg "  may_terror_2_in : #{space.name}", r
+      r
+    end
+
+    def _pacifiable(space, de_gaule)
+      # in a city or sector with gov base OR
+      # if Recall de Gaulle in a sector with troops and police and gov control
+      (!space.country? && space.gov_bases.positive?) ||
+        (de_gaule && space.sector? && space.troops.positive? && space.police.positive? && space.gov_control?)
+    end
+
     # 8.1.2 - Procedure Guidelines
 
     def _filter(spaces, &block)
@@ -217,6 +246,16 @@ module ColonialTwilight
 
     def may_add_base_in?(space)
       space.guerrillas > 2 && (space.fln_bases < (space.country? ? space.max_bases : 1))
+    end
+
+    def placeable_guerrillas?(board = @board)
+      return true if board.available_fln_underground.positive?
+
+      board.spaces.map(&method(:_removable_guerrillas)).inject(0, :+).positive?
+    end
+
+    def placeable_guerrillas(board = @board)
+      board.available_fln_underground + board.spaces.map(&method(:_removable_guerrillas)).inject(0, :+)
     end
 
     def max_placable_guerrillas_in?(space)

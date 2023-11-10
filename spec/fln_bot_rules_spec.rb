@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
+require './lib/colonial_twilight/fln_rules'
 require './lib/colonial_twilight/fln_bot_rules'
 require './spec/mock_board'
 
 class FLNRulesImpl
+  include ColonialTwilight::FLNRules
   include ColonialTwilight::FLNBotRules
   attr_reader :board
   attr_writer :debug, :limited_op_only, :first_eligible, :will_be_next_first_eligible
@@ -547,7 +549,138 @@ describe ColonialTwilight::FLNBotRules do
     end
   end
 
+  describe 'Terror' do
+    it 'may_terror_1_in?' do
+      a = Sector.new(pop: 1, fln_underground: 1, support: true)
+      expect(@rules.may_terror_1_in?(a)).to be true
+    end
+
+    it 'may_terror_1_in? no pop' do
+      a = Sector.new(fln_underground: 1, support: true)
+      expect(@rules.may_terror_1_in?(a)).to be false
+    end
+
+    it 'may_terror_1_in? no support' do
+      a = Sector.new(pop: 1, fln_underground: 1)
+      expect(@rules.may_terror_1_in?(a)).to be false
+    end
+
+    it 'may_terror_1_in? no underground' do
+      a = Sector.new(pop: 1, support: true)
+      expect(@rules.may_terror_1_in?(a)).to be false
+    end
+
+    it 'may_terror_1_in? base and not enough underground' do
+      a = Sector.new(pop: 1, fln_bases: 1, fln_underground: 1, support: true)
+      expect(@rules.may_terror_1_in?(a)).to be false
+    end
+
+    it 'may_terror_1_in? base and enough underground' do
+      a = Sector.new(pop: 1, fln_bases: 1, fln_underground: 2, support: true)
+      expect(@rules.may_terror_1_in?(a)).to be true
+    end
+
+    it 'terror_1_priority most pop' do
+      a = Sector.new(pop: 1)
+      b = Sector.new(pop: 2)
+      expect(@rules.terror_1_priority([a, b])[0]).to be b
+    end
+
+    it 'may_terro_2_in?' do
+      a = Sector.new(pop: 1, fln_underground: 1, neutral: true, gov_bases: 1)
+      expect(@rules.may_terror_2_in?(a)).to be true
+    end
+
+    it 'may_terro_2_in? default' do
+      a = Sector.new(pop: 1, fln_underground: 1)
+      expect(@rules.may_terror_2_in?(a)).to be false
+    end
+
+    it 'may_terro_2_in? is neutral' do
+      a = Sector.new(pop: 1, fln_underground: 1, neutral: true)
+      expect(@rules.may_terror_2_in?(a)).to be false
+    end
+
+    it 'may_terro_2_in? gov base' do
+      a = Sector.new(pop: 1, fln_underground: 1, gov_bases: 1)
+      expect(@rules.may_terror_2_in?(a)).to be false
+    end
+
+    it 'may_terro_2_in? neutral and gov base but terror' do
+      a = Sector.new(pop: 1, fln_underground: 1, neutral: true, gov_bases: 1, terror: 1)
+      expect(@rules.may_terror_2_in?(a)).to be false
+    end
+
+    it '_pacifiable no gov base' do
+      a = Sector.new
+      expect(@rules._pacifiable(a, false)).to be false
+    end
+
+    it '_pacifiable not country' do
+      a = Sector.new(name: 'country', gov_bases: 1)
+      expect(@rules._pacifiable(a, false)).to be false
+    end
+
+    it '_pacifiable not country and gov base' do
+      a = Sector.new(gov_bases: 1)
+      expect(@rules._pacifiable(a, false)).to be true
+    end
+
+    it '_pacifiable de Gaule country' do
+      a = Sector.new(name: 'country', troops: 1, police: 1)
+      expect(@rules._pacifiable(a, true)).to be false
+    end
+
+    it '_pacifiable de Gaule sector and troops and police and gov control' do
+      a = Sector.new(troops: 1, french_police: 1)
+      expect(@rules._pacifiable(a, true)).to be true
+    end
+
+    it '_pacifiable de Gaule no troops' do
+      a = Sector.new(french_police: 1)
+      expect(@rules._pacifiable(a, true)).to be false
+    end
+
+    it '_pacifiable de Gaule no police' do
+      a = Sector.new(troops: 1)
+      expect(@rules._pacifiable(a, true)).to be false
+    end
+
+    it '_pacifiable de Gaule no control' do
+      a = Sector.new(troops: 1, french_police: 1, fln_underground: 2)
+      expect(@rules._pacifiable(a, true)).to be false
+    end
+  end
+
   describe '8.1.2 Procedure Guidelines' do
+    it 'placeable_guerrillas?' do
+      expect(@rules.placeable_guerrillas?).to be false
+    end
+
+    it 'placeable_guerrillas? available' do
+      @board.available_fln_underground = 1
+      expect(@rules.placeable_guerrillas?).to be true
+    end
+
+    it 'placeable_guerrillas? active on map' do
+      @board.spaces << Sector.new(name: 'a', fln_active: 1)
+      expect(@rules.placeable_guerrillas?).to be true
+    end
+
+    it 'placeable_guerrillas' do
+      expect(@rules.placeable_guerrillas).to eq 0
+    end
+
+    it 'placeable_guerrillas available' do
+      @board.available_fln_underground = 1
+      expect(@rules.placeable_guerrillas).to eq 1
+    end
+
+    it 'placeable_guerrillas active on map' do
+      @board.spaces << Sector.new(name: 'a', fln_active: 1)
+      expect(@rules.placeable_guerrillas).to eq 1
+    end
+
     it 'available_fln_bases?' do
       @board.available_fln_bases = 0
       expect(@rules.available_fln_bases?).to be false
