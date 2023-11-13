@@ -68,7 +68,7 @@ module ColonialTwilight
 
     # Ambush 4.3.3
     def may_ambush_in?(space)
-      may_attack_in?(space)
+      may_attack_in?(space) && space.fln_underground.positive?
     end
 
     def ambush_spaces(board)

@@ -218,6 +218,37 @@ module ColonialTwilight
         (de_gaule && space.sector? && space.troops.positive? && space.police.positive? && space.gov_control?)
     end
 
+    # Attack
+
+    def may_attack_1_in?(space)
+      # attack will remove 1+ GOV piece, do not expose a base
+      r = may_attack_in?(space) && space.guerrillas > 5 && space.fln_bases.zero?
+      dbg "  may_attack_1_in : #{space.name}", r
+      r
+    end
+
+    def may_ambush_1_in?(space)
+      # do not expose a base
+      r = may_ambush_in?(space) && (space.fln_bases.zero? ? true : space.guerrillas > 1)
+      dbg "  may_attack_1_in : #{space.name}", r
+      r
+    end
+
+    def may_attack_2_in?(space)
+      # 4+ guerrillas, do not expose a base
+      r = may_attack_in?(space) && space.guerrillas > 3 && space.fln_bases.zero?
+      dbg "  may_attack_2_in : #{space.name}", r
+      r
+    end
+
+    def attack_priority(spaces)
+      # GOV bases -> French Troops -> French Police -> most pieces
+      f = _filter(spaces) { |s| s.gov_bases.positive? }
+      f = _filter(f) { |s| s.french_troops.positive? }
+      f = _filter(f) { |s| s.french_police.positive? }
+      _max(f, :gov)
+    end
+
     # 8.1.2 - Procedure Guidelines
 
     def _filter(spaces, &block)

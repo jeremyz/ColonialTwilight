@@ -652,6 +652,103 @@ describe ColonialTwilight::FLNBotRules do
     end
   end
 
+  describe 'Attack' do
+    it 'may attack 1' do
+      a = Sector.new(gov_cubes: 1, fln_underground: 2, fln_active: 4)
+      expect(@rules.may_attack_1_in?(a)).to be true
+    end
+
+    it 'may attack 1 but no gov' do
+      a = Sector.new(fln_underground: 2, fln_active: 4)
+      expect(@rules.may_attack_1_in?(a)).to be false
+    end
+
+    it 'may attack 1 but not enough fln' do
+      a = Sector.new(gov_cubes: 1, fln_underground: 2, fln_active: 3)
+      expect(@rules.may_attack_1_in?(a)).to be false
+    end
+
+    it 'may attack 1 but fln base' do
+      a = Sector.new(gov_cubes: 1, fln_underground: 2, fln_active: 4, fln_bases: 1)
+      expect(@rules.may_attack_1_in?(a)).to be false
+    end
+
+    it 'may attack 2' do
+      a = Sector.new(gov_cubes: 1, fln_underground: 2, fln_active: 2)
+      expect(@rules.may_attack_2_in?(a)).to be true
+    end
+
+    it 'may attack 2 but no gov' do
+      a = Sector.new(fln_underground: 2, fln_active: 2)
+      expect(@rules.may_attack_2_in?(a)).to be false
+    end
+
+    it 'may attack 2 but not enough fln' do
+      a = Sector.new(gov_cubes: 1, fln_underground: 2, fln_active: 1)
+      expect(@rules.may_attack_2_in?(a)).to be false
+    end
+
+    it 'may attack 2 but fln base' do
+      a = Sector.new(gov_cubes: 1, fln_underground: 2, fln_active: 2, fln_bases: 1)
+      expect(@rules.may_attack_2_in?(a)).to be false
+    end
+
+    it 'may ambush 1 in' do
+      a = Sector.new(gov_cubes: 1, fln_underground: 1)
+      expect(@rules.may_ambush_1_in?(a)).to be true
+    end
+
+    it 'may ambush 1 in but no underground' do
+      a = Sector.new(gov_cubes: 1, fln_active: 1)
+      expect(@rules.may_ambush_1_in?(a)).to be false
+    end
+
+    it 'may ambush 1 in but bases' do
+      a = Sector.new(gov_cubes: 1, fln_underground: 1, fln_bases: 1)
+      expect(@rules.may_ambush_1_in?(a)).to be false
+    end
+
+    it 'may ambush 1 in bases and enough guerillas' do
+      a = Sector.new(gov_cubes: 1, fln_underground: 1, fln_active: 1, fln_bases: 1)
+      expect(@rules.may_ambush_1_in?(a)).to be true
+    end
+
+    it 'attack priority at bases' do
+      a = Sector.new(gov_bases: 1)
+      b = Sector.new(gov_bases: 2)
+      c = Sector.new(gov_bases: 1)
+      expect(@rules.attack_priority([a, b, c])[0]).to be b
+    end
+
+    it 'attack priority french troops' do
+      a = Sector.new(gov_bases: 2)
+      b = Sector.new(gov_bases: 2, french_troops: 2)
+      c = Sector.new(gov_bases: 2, french_troops: 1)
+      expect(@rules.attack_priority([a, b, c])[0]).to be b
+    end
+
+    it 'attack priority french police' do
+      a = Sector.new(gov_bases: 2, french_troops: 2)
+      b = Sector.new(gov_bases: 2, french_troops: 2, french_police: 2)
+      c = Sector.new(gov_bases: 2, french_troops: 2, french_police: 1)
+      expect(@rules.attack_priority([a, b, c])[0]).to be b
+    end
+
+    it 'attack priority gov most pieces, gov base' do
+      a = Sector.new(gov_bases: 2, french_troops: 2, french_police: 2)
+      b = Sector.new(gov_bases: 3, french_troops: 2, french_police: 2)
+      c = Sector.new(gov_bases: 2, french_troops: 2, french_police: 2)
+      expect(@rules.attack_priority([a, b, c])[0]).to be b
+    end
+
+    it 'attack priority gov most pieces, french troops' do
+      a = Sector.new(gov_bases: 2, french_troops: 2, french_police: 2)
+      b = Sector.new(gov_bases: 2, french_troops: 3, french_police: 2)
+      c = Sector.new(gov_bases: 2, french_troops: 2, french_police: 2)
+      expect(@rules.attack_priority([a, b, c])[0]).to be b
+    end
+  end
+
   describe '8.1.2 Procedure Guidelines' do
     it 'placeable_guerrillas?' do
       expect(@rules.placeable_guerrillas?).to be false
