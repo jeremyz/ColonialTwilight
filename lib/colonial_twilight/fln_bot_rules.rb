@@ -230,7 +230,7 @@ module ColonialTwilight
     def may_ambush_1_in?(space)
       # do not expose a base
       r = may_ambush_in?(space) && (space.fln_bases.zero? ? true : space.guerrillas > 1)
-      dbg "  may_attack_1_in : #{space.name}", r
+      dbg "  may_ambush_1_in : #{space.name}", r
       r
     end
 
@@ -242,9 +242,9 @@ module ColonialTwilight
     end
 
     def attack_priority(spaces)
-      # GOV bases -> French Troops -> French Police -> most pieces
-      f = _filter(spaces) { |s| s.gov_bases.positive? }
-      f = _filter(f) { |s| s.french_troops.positive? }
+      # remove priority GOV bases -> French Troops -> French Police -> most pieces
+      f = _filter(spaces) { |s| s.gov_bases.positive? && s.troops.zero? && s.police.zero? }
+      f = _filter(f) { |s| s.french_troops.positive? && s.police.zero? }
       f = _filter(f) { |s| s.french_police.positive? }
       _max(f, :gov)
     end

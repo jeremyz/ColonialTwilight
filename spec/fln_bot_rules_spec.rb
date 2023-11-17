@@ -721,16 +721,16 @@ describe ColonialTwilight::FLNBotRules do
     end
 
     it 'attack priority french troops' do
-      a = Sector.new(gov_bases: 2)
-      b = Sector.new(gov_bases: 2, french_troops: 2)
-      c = Sector.new(gov_bases: 2, french_troops: 1)
+      a = Sector.new(gov_bases: 2, algerian_troops: 6)
+      b = Sector.new(gov_bases: 3, french_troops: 2)
+      c = Sector.new(gov_bases: 3, french_troops: 1)
       expect(@rules.attack_priority([a, b, c])[0]).to be b
     end
 
     it 'attack priority french police' do
-      a = Sector.new(gov_bases: 2, french_troops: 2)
+      a = Sector.new(gov_bases: 1, french_troops: 3, algerian_police: 6)
       b = Sector.new(gov_bases: 2, french_troops: 2, french_police: 2)
-      c = Sector.new(gov_bases: 2, french_troops: 2, french_police: 1)
+      c = Sector.new(gov_bases: 3, french_troops: 1, french_police: 1)
       expect(@rules.attack_priority([a, b, c])[0]).to be b
     end
 
@@ -744,6 +744,13 @@ describe ColonialTwilight::FLNBotRules do
     it 'attack priority gov most pieces, french troops' do
       a = Sector.new(gov_bases: 2, french_troops: 2, french_police: 2)
       b = Sector.new(gov_bases: 2, french_troops: 3, french_police: 2)
+      c = Sector.new(gov_bases: 2, french_troops: 2, french_police: 2)
+      expect(@rules.attack_priority([a, b, c])[0]).to be b
+    end
+
+    it 'attack priority gov most pieces, french police' do
+      a = Sector.new(gov_bases: 2, french_troops: 2, french_police: 2)
+      b = Sector.new(gov_bases: 2, french_troops: 2, french_police: 3)
       c = Sector.new(gov_bases: 2, french_troops: 2, french_police: 2)
       expect(@rules.attack_priority([a, b, c])[0]).to be b
     end
