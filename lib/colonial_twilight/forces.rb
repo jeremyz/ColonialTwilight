@@ -119,6 +119,13 @@ module ColonialTwilight
       update_control
     end
 
+    def activate(num)
+      raise "can't activate #{num}" if @fln_underground < num
+
+      @fln_underground -= num
+      @fln_active += num
+    end
+
     private
 
     def add_base(type, num = 1)

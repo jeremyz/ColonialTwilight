@@ -132,6 +132,14 @@ describe ColonialTwilight::Forces do
       expect { @f.add :wrong, 1 }.to raise_error(Exception)
     end
 
+    it 'activate raise' do
+      expect { @f.activate(7) }.to raise_error(Exception)
+    end
+
+    it 'activate' do
+      expect(@f.activate(6)).to eq 13
+    end
+
     it 'data' do
       d = @f.data
       @data.keys do |k, v|

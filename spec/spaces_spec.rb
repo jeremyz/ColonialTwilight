@@ -136,6 +136,12 @@ describe ColonialTwilight::Sector do
     expect(@s.resettled?).to be true
     expect(@s.pop).to eq 0
   end
+
+  it 'activate' do
+    @s.add :fln_active, 1
+    @s.add :fln_underground, 2
+    expect(@s.activate(2)).to eq 3
+  end
 end
 
 describe ColonialTwilight::City do

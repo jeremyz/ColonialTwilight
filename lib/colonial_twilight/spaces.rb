@@ -177,6 +177,10 @@ module ColonialTwilight
         raise "unknown shift direction : #{towards}"
       end
     end
+
+    def activate(num)
+      @forces.activate(num)
+    end
   end
 
   class City < Sector
