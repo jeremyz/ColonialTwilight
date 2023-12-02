@@ -223,9 +223,9 @@ describe ColonialTwilight::FLNBotRules do
     end
 
     it 'rally_3_priority Algeria' do
-      a = Sector.new
-      b = Sector.new(name: 'country')
-      expect(@rules.rally_3_priority([a, b])[0]).to be a
+      a = Sector.new(name: 'country')
+      b = Sector.new
+      expect(@rules.rally_3_priority([a, b])[0]).to be b
     end
 
     it 'rally_3_priority with GOV cubes' do
@@ -236,16 +236,16 @@ describe ColonialTwilight::FLNBotRules do
 
     it 'rally_3_priority pop 1+' do
       a = Sector.new(pop: 1)
-      b = Sector.new(gov_cubes: 1, pop: 1)
-      c = Sector.new(gov_cubes: 1)
-      expect(@rules.rally_3_priority([a, b, c])[0]).to be b
+      b = Sector.new(gov_cubes: 1)
+      c = Sector.new(gov_cubes: 1, pop: 1)
+      expect(@rules.rally_3_priority([a, b, c])[0]).to be c
     end
 
     it 'rally_3_priority least fln_underground' do
       a = Sector.new(pop: 1)
-      b = Sector.new(gov_cubes: 1, pop: 1)
-      c = Sector.new(gov_cubes: 1, pop: 1, fln_underground: 1)
-      expect(@rules.rally_3_priority([a, b, c])[0]).to be b
+      b = Sector.new(gov_cubes: 1, pop: 1, fln_underground: 1)
+      c = Sector.new(gov_cubes: 1, pop: 1)
+      expect(@rules.rally_3_priority([a, b, c])[0]).to be c
     end
 
     it 'may_rally_5_in? city' do
@@ -309,23 +309,23 @@ describe ColonialTwilight::FLNBotRules do
     end
 
     it 'rally_6_priority population' do
-      a = Sector.new(pop: 2)
-      b = Sector.new(pop: 1)
-      expect(@rules.rally_6_priority([a, b])[0]).to be a
+      a = Sector.new(pop: 1)
+      b = Sector.new(pop: 2)
+      expect(@rules.rally_6_priority([a, b])[0]).to be b
     end
 
     it 'rally_6_priority min terror' do
       a = Sector.new(pop: 1, terror: 2)
-      b = Sector.new(pop: 2, terror: 1)
-      c = Sector.new(pop: 2, terror: 2)
-      expect(@rules.rally_6_priority([a, b, c])[0]).to be b
+      b = Sector.new(pop: 2, terror: 2)
+      c = Sector.new(pop: 2, terror: 1)
+      expect(@rules.rally_6_priority([a, b, c])[0]).to be c
     end
 
     it 'rally_6_priority support' do
       a = Sector.new(pop: 2, terror: 1, support: false)
-      b = Sector.new(pop: 2, terror: 1, support: true)
-      c = Sector.new(pop: 2, terror: 2, support: true)
-      expect(@rules.rally_6_priority([a, b, c])[0]).to be b
+      b = Sector.new(pop: 2, terror: 2, support: true)
+      c = Sector.new(pop: 2, terror: 1, support: true)
+      expect(@rules.rally_6_priority([a, b, c])[0]).to be c
     end
 
     it 'may_rally_7_in?' do
@@ -344,39 +344,40 @@ describe ColonialTwilight::FLNBotRules do
     end
 
     it 'rally_7_priority population' do
-      a = Sector.new(pop: 2)
+      a = Sector.new(pop: 1)
       b = Sector.new(pop: 1)
-      c = Sector.new(pop: 1)
-      expect(@rules.rally_7_priority([a, b, c])[0]).to be a
+      c = Sector.new(pop: 2)
+      expect(@rules.rally_7_priority([a, b, c])[0]).to be c
     end
 
     it 'rally_7_priority gain FLN control' do
       a = Sector.new(gov_cubes: 2)
-      b = Sector.new(gov_cubes: 1, fln_active: 1)
-      c = Sector.new(gov_cubes: 1)
+      b = Sector.new(gov_cubes: 1, fln_active: 3)
+      c = Sector.new(gov_cubes: 1, fln_active: 1)
       @board.available_fln_underground = 1
-      expect(@rules.rally_7_priority([a, b, c])[0]).to be b
+      expect(@rules.rally_7_priority([a, b, c])[0]).to be c
     end
 
     it 'rally_7_priority remove GOV control' do
       a = Sector.new(gov_cubes: 3)
-      b = Sector.new(gov_cubes: 1)
-      c = Sector.new(gov_cubes: 2)
+      b = Sector.new(gov_cubes: 2)
+      c = Sector.new(gov_cubes: 1)
       @board.available_fln_underground = 1
-      expect(@rules.rally_7_priority([a, b, c])[0]).to be b
+      expect(@rules.rally_7_priority([a, b, c])[0]).to be c
     end
 
     it 'rally_7_priority city?' do
-      a = Sector.new(name: 'city')
+      a = Sector.new
       b = Sector.new
-      expect(@rules.rally_7_priority([a, b])[0]).to be a
+      c = Sector.new(name: 'city')
+      expect(@rules.rally_7_priority([a, b, c])[0]).to be c
     end
 
     it 'rally_7_priority least terror' do
       a = Sector.new
-      b = Sector.new(name: 'city', terror: 1)
-      c = Sector.new(name: 'city', terror: 2)
-      expect(@rules.rally_7_priority([a, b, c])[0]).to be b
+      b = Sector.new(name: 'city', terror: 2)
+      c = Sector.new(name: 'city', terror: 1)
+      expect(@rules.rally_7_priority([a, b, c])[0]).to be c
     end
 
     it 'may_rally_8_in? no fln guerrillas' do
@@ -395,23 +396,23 @@ describe ColonialTwilight::FLNBotRules do
     end
 
     it 'rally_8_priority Algeria' do
-      a = Sector.new
-      b = Sector.new(name: 'country')
-      expect(@rules.rally_8_priority([a, b])[0]).to be a
+      a = Sector.new(name: 'country')
+      b = Sector.new
+      expect(@rules.rally_8_priority([a, b])[0]).to be b
     end
 
     it 'rally_8_priority most guerrillas' do
       a = Sector.new
-      b = Sector.new(fln_active: 2, fln_underground: 1)
-      c = Sector.new(fln_active: 1, fln_underground: 1)
-      expect(@rules.rally_8_priority([a, b, c])[0]).to be b
+      b = Sector.new(fln_active: 1, fln_underground: 1)
+      c = Sector.new(fln_active: 2, fln_underground: 1)
+      expect(@rules.rally_8_priority([a, b, c])[0]).to be c
     end
 
     it 'rally_8_priority no cubes' do
       a = Sector.new
-      b = Sector.new(fln_active: 1, fln_underground: 1)
-      c = Sector.new(fln_active: 1, fln_underground: 1, gov_cubes: 1)
-      expect(@rules.rally_8_priority([a, b, c])[0]).to be b
+      b = Sector.new(fln_active: 1, fln_underground: 1, gov_cubes: 1)
+      c = Sector.new(fln_active: 1, fln_underground: 1)
+      expect(@rules.rally_8_priority([a, b, c])[0]).to be c
     end
 
     it 'may_rally_9_in? no control and no base' do
@@ -451,9 +452,9 @@ describe ColonialTwilight::FLNBotRules do
 
     it 'rally_9_priority no cubes' do
       a = Sector.new(terror: 1, oppose: true)
-      b = Sector.new(terror: 1, neutral: true)
-      c = Sector.new(terror: 2, neutral: true)
-      expect(@rules.rally_9_priority([a, b, c], 2)[0]).to be b
+      b = Sector.new(terror: 2, neutral: true)
+      c = Sector.new(terror: 1, neutral: true)
+      expect(@rules.rally_9_priority([a, b, c], 2)[0]).to be c
     end
   end
 
@@ -494,24 +495,24 @@ describe ColonialTwilight::FLNBotRules do
     end
 
     it 'extort_priority 2+' do
-      a = Sector.new(fln_underground: 1)
-      b = Sector.new(fln_underground: 2)
-      c = Sector.new(fln_underground: 1)
-      expect(@rules.extort_priority([a, b, c])[0]).to be b
+      a = Sector.new()
+      b = Sector.new(fln_underground: 1)
+      c = Sector.new(fln_underground: 2)
+      expect(@rules.extort_priority([a, b, c])[0]).to be c
     end
 
     it 'extort_priority 3+ if fln bases and gov cubes' do
       a = Sector.new(fln_underground: 2, fln_bases: 1, gov_cubes: 1)
-      b = Sector.new(fln_underground: 3, fln_bases: 1, gov_cubes: 1)
-      c = Sector.new(fln_underground: 2, fln_bases: 1, gov_cubes: 1)
-      expect(@rules.extort_priority([a, b, c])[0]).to be b
+      b = Sector.new(fln_underground: 1, fln_bases: 1, gov_cubes: 1)
+      c = Sector.new(fln_underground: 3, fln_bases: 1, gov_cubes: 1)
+      expect(@rules.extort_priority([a, b, c])[0]).to be c
     end
 
     it 'extort_priority country' do
       a = Sector.new(fln_underground: 2, fln_bases: 1, gov_cubes: 1)
-      b = Sector.new(fln_underground: 3, fln_bases: 1, gov_cubes: 1, type: :country)
-      c = Sector.new(fln_underground: 3, fln_bases: 1, gov_cubes: 1)
-      expect(@rules.extort_priority([a, b, c])[0]).to be b
+      b = Sector.new(fln_underground: 3, fln_bases: 1, gov_cubes: 1)
+      c = Sector.new(name: 'country', fln_underground: 3, fln_bases: 1, gov_cubes: 1)
+      expect(@rules.extort_priority([a, b, c])[0]).to be c
     end
   end
 
@@ -533,9 +534,9 @@ describe ColonialTwilight::FLNBotRules do
 
     it 'subvert_1_priority algerian police' do
       a = Sector.new(fln_underground: 1, algerian_police: 1)
-      b = Sector.new(fln_underground: 1, algerian_police: 3)
-      c = Sector.new(fln_underground: 1, algerian_police: 2)
-      expect(@rules.subvert_1_priority([a, b, c])[0]).to be b
+      b = Sector.new(fln_underground: 1, algerian_police: 2)
+      c = Sector.new(fln_underground: 1, algerian_police: 3)
+      expect(@rules.subvert_1_priority([a, b, c])[0]).to be c
     end
 
     it 'may_subvert_2_in?' do
@@ -714,45 +715,45 @@ describe ColonialTwilight::FLNBotRules do
     end
 
     it 'attack priority at bases' do
-      a = Sector.new(gov_bases: 1)
-      b = Sector.new(gov_bases: 2)
-      c = Sector.new(gov_bases: 1)
-      expect(@rules.attack_priority([a, b, c])[0]).to be b
+      a = Sector.new(gov_bases: 0)
+      b = Sector.new(gov_bases: 1)
+      c = Sector.new(gov_bases: 2)
+      expect(@rules.attack_priority([a, b, c])[0]).to be c
     end
 
     it 'attack priority french troops' do
       a = Sector.new(gov_bases: 2, algerian_troops: 6)
-      b = Sector.new(gov_bases: 3, french_troops: 2)
-      c = Sector.new(gov_bases: 3, french_troops: 1)
-      expect(@rules.attack_priority([a, b, c])[0]).to be b
+      b = Sector.new(gov_bases: 3, french_troops: 1)
+      c = Sector.new(gov_bases: 3, french_troops: 2)
+      expect(@rules.attack_priority([a, b, c])[0]).to be c
     end
 
     it 'attack priority french police' do
       a = Sector.new(gov_bases: 1, french_troops: 3, algerian_police: 6)
-      b = Sector.new(gov_bases: 2, french_troops: 2, french_police: 2)
-      c = Sector.new(gov_bases: 3, french_troops: 1, french_police: 1)
-      expect(@rules.attack_priority([a, b, c])[0]).to be b
+      b = Sector.new(gov_bases: 3, french_troops: 1, french_police: 1)
+      c = Sector.new(gov_bases: 2, french_troops: 2, french_police: 2)
+      expect(@rules.attack_priority([a, b, c])[0]).to be c
     end
 
     it 'attack priority gov most pieces, gov base' do
       a = Sector.new(gov_bases: 2, french_troops: 2, french_police: 2)
-      b = Sector.new(gov_bases: 3, french_troops: 2, french_police: 2)
-      c = Sector.new(gov_bases: 2, french_troops: 2, french_police: 2)
-      expect(@rules.attack_priority([a, b, c])[0]).to be b
+      b = Sector.new(gov_bases: 2, french_troops: 2, french_police: 2)
+      c = Sector.new(gov_bases: 3, french_troops: 2, french_police: 2)
+      expect(@rules.attack_priority([a, b, c])[0]).to be c
     end
 
     it 'attack priority gov most pieces, french troops' do
       a = Sector.new(gov_bases: 2, french_troops: 2, french_police: 2)
-      b = Sector.new(gov_bases: 2, french_troops: 3, french_police: 2)
-      c = Sector.new(gov_bases: 2, french_troops: 2, french_police: 2)
-      expect(@rules.attack_priority([a, b, c])[0]).to be b
+      b = Sector.new(gov_bases: 2, french_troops: 2, french_police: 2)
+      c = Sector.new(gov_bases: 2, french_troops: 3, french_police: 2)
+      expect(@rules.attack_priority([a, b, c])[0]).to be c
     end
 
     it 'attack priority gov most pieces, french police' do
       a = Sector.new(gov_bases: 2, french_troops: 2, french_police: 2)
-      b = Sector.new(gov_bases: 2, french_troops: 2, french_police: 3)
-      c = Sector.new(gov_bases: 2, french_troops: 2, french_police: 2)
-      expect(@rules.attack_priority([a, b, c])[0]).to be b
+      b = Sector.new(gov_bases: 2, french_troops: 2, french_police: 2)
+      c = Sector.new(gov_bases: 2, french_troops: 2, french_police: 3)
+      expect(@rules.attack_priority([a, b, c])[0]).to be c
     end
   end
 
@@ -871,16 +872,16 @@ describe ColonialTwilight::FLNBotRules do
 
     it 'place_guerrillas_priority support' do
       a = Sector.new(support: false)
-      b = Sector.new(support: true)
-      c = Sector.new(support: false)
-      expect(@rules.place_guerrillas_priority([a, b, c])[0]).to be b
+      b = Sector.new(support: false)
+      c = Sector.new(support: true)
+      expect(@rules.place_guerrillas_priority([a, b, c])[0]).to be c
     end
 
     it 'place_guerrillas_priority support and fln_active' do
       a = Sector.new(support: false)
-      b = Sector.new(support: true, fln_active: 1)
-      c = Sector.new(support: true)
-      expect(@rules.place_guerrillas_priority([a, b, c])[0]).to be b
+      b = Sector.new(support: true)
+      c = Sector.new(support: true, fln_active: 1)
+      expect(@rules.place_guerrillas_priority([a, b, c])[0]).to be c
     end
 
     it '_remove_guerrillas_priority none' do
@@ -891,10 +892,10 @@ describe ColonialTwilight::FLNBotRules do
 
     it '_remove_guerrillas_priority most guerrillas' do
       a = Sector.new(fln_active: 2, fln_underground: 1)
-      b = Sector.new(fln_active: 2, fln_underground: 2)
-      c = Sector.new(fln_active: 1, fln_underground: 2)
+      b = Sector.new(fln_active: 1, fln_underground: 2)
+      c = Sector.new(fln_active: 2, fln_underground: 2)
       d = Sector.new(fln_active: 3, fln_underground: 2)
-      expect(@rules._remove_guerrillas_priority([a, b, c, d], { d => true })[0]).to be b
+      expect(@rules._remove_guerrillas_priority([a, b, c, d], { d => true })[0]).to be c
     end
 
     it 'pick guerrillas from most guerrillas' do

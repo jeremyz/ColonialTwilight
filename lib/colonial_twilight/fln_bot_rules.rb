@@ -125,8 +125,8 @@ module ColonialTwilight
     def rally_7_priority(spaces)
       # highest population -> gain FLN control -> remove Gov control -> city -> least terror
       f = _max(spaces, :pop)
-      f = _filter(f) { |s| s.gov < s.fln + place_guerrillas_in(s).values.sum }
-      f = _filter(f) { |s| s.gov == s.fln + place_guerrillas_in(s).values.sum }
+      f = _filter(f) { |s| s.gov >= s.fln && s.gov < s.fln + place_guerrillas_in(s).values.sum }
+      f = _filter(f) { |s| s.gov >= s.fln && s.gov == s.fln + place_guerrillas_in(s).values.sum }
       f = _filter(f, &:city?)
       _min(f, :terror)
     end
