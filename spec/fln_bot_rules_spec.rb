@@ -450,11 +450,18 @@ describe ColonialTwilight::FLNBotRules do
       expect(@rules.may_rally_9_in?(a)).to be true
     end
 
-    it 'rally_9_priority no cubes' do
+    it 'rally_9_priority support' do
       a = Sector.new(terror: 1, oppose: true)
-      b = Sector.new(terror: 2, neutral: true)
-      c = Sector.new(terror: 1, neutral: true)
-      expect(@rules.rally_9_priority([a, b, c], 2)[0]).to be c
+      b = Sector.new(terror: 3, support: true)
+      c = Sector.new(terror: 2, support: true)
+      expect(@rules.rally_9_priority([a, b, c], 3)[0]).to be c
+    end
+
+    it 'rally_9_priority neutral' do
+      a = Sector.new(terror: 1, oppose: true)
+      b = Sector.new(terror: 3, neutral: true)
+      c = Sector.new(terror: 2, neutral: true)
+      expect(@rules.rally_9_priority([a, b, c], 3)[0]).to be c
     end
   end
 

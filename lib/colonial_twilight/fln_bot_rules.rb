@@ -145,13 +145,14 @@ module ColonialTwilight
     end
 
     def may_rally_9_in?(space)
-      r = may_agitate_in?(space) && (space.terror.positive? || !space.oppose?)
+      r = may_agitate_in?(space)
       dbg "  may_rally_9_in : #{space.name}", r
       r
     end
 
     def rally_9_priority(spaces, resources)
-      _filter(spaces) { |s| !s.oppose? && resources > s.terror }
+      f = _filter(spaces) { |s| s.support? && resources > s.terror }
+      _filter(f) { |s| s.neutral? && resources > s.terror }
     end
 
     # Extort
