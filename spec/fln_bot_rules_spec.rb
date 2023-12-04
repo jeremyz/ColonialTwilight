@@ -450,25 +450,68 @@ describe ColonialTwilight::FLNBotRules do
       expect(@rules.may_rally_9_in?(a)).to be true
     end
 
-    it 'rally_9_priority support' do
+    it 'rally_9_priority support rallied' do
       a = Sector.new(terror: 1, oppose: true)
       b = Sector.new(terror: 3, support: true)
       c = Sector.new(terror: 2, support: true)
-      expect(@rules.rally_9_priority([a, b, c], 3)[0]).to be c
+      l = @rules.rally_9_priority([a, b, c], 3) { true }
+      expect(l[0]).to be c
     end
 
-    it 'rally_9_priority neutral' do
+    it 'rally_9_priority support not rallied' do
+      a = Sector.new(terror: 1, oppose: true)
+      b = Sector.new(terror: 2, support: true)
+      c = Sector.new(terror: 1, support: true)
+      l = @rules.rally_9_priority([a, b, c], 3) { false }
+      expect(l[0]).to be c
+    end
+
+    it 'rally_9_priority neutral rallied' do
       a = Sector.new(terror: 1, oppose: true)
       b = Sector.new(terror: 3, neutral: true)
       c = Sector.new(terror: 2, neutral: true)
-      expect(@rules.rally_9_priority([a, b, c], 3)[0]).to be c
+      l = @rules.rally_9_priority([a, b, c], 3) { true }
+      expect(l[0]).to be c
     end
 
-    it 'rally_9_priority infinite resources' do
+    it 'rally_9_priority neutral not rallied' do
+      a = Sector.new(terror: 1, oppose: true)
+      b = Sector.new(terror: 2, neutral: true)
+      c = Sector.new(terror: 1, neutral: true)
+      l = @rules.rally_9_priority([a, b, c], 3) { false }
+      expect(l[0]).to be c
+    end
+
+    it 'rally_9_priority infinite resources rallied' do
       a = Sector.new(terror: 1, oppose: true)
       b = Sector.new(terror: 3, support: true)
       c = Sector.new(terror: 2, support: true)
-      expect(@rules.rally_9_priority([a, b, c], 0).size).to be 2
+      l = @rules.rally_9_priority([a, b, c], 0) { true }
+      expect(l.size).to eq 2
+    end
+
+    it 'rally_9_priority infinite resources not rallied' do
+      a = Sector.new(terror: 1, oppose: true)
+      b = Sector.new(terror: 3, support: true)
+      c = Sector.new(terror: 2, support: true)
+      l = @rules.rally_9_priority([a, b, c], 0) { false }
+      expect(l.size).to eq 2
+    end
+
+    it 'rally_9_priority infinite resources rallied' do
+      a = Sector.new(terror: 1, oppose: true)
+      b = Sector.new(terror: 3, support: true)
+      c = Sector.new(terror: 2, support: true)
+      l = @rules.rally_9_priority([a, b, c], 0) { true }
+      expect(l.size).to eq 2
+    end
+
+    it 'rally_9_priority infinite resources not rallied' do
+      a = Sector.new(terror: 1, oppose: true)
+      b = Sector.new(terror: 3, support: true)
+      c = Sector.new(terror: 2, support: true)
+      l = @rules.rally_9_priority([a, b, c], 0) { false }
+      expect(l.size).to eq 2
     end
   end
 
