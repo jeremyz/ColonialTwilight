@@ -151,8 +151,8 @@ module ColonialTwilight
     end
 
     def rally_9_priority(spaces, resources)
-      f = _filter(spaces) { |s| s.support? && resources > s.terror }
-      _filter(f) { |s| s.neutral? && resources > s.terror }
+      f = _filter(spaces) { |s| s.support? && (resources.zero? || resources > s.terror) }
+      _filter(f) { |s| s.neutral? && (resources.zero? || resources > s.terror) }
     end
 
     # Extort
