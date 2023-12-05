@@ -128,21 +128,68 @@ end
 
 class Board
   attr_reader :sector, :spaces
-  attr_accessor :fln_resources, :available_fln_underground, :available_fln_bases
+  attr_accessor :fln_resources, :available_fln_underground, :available_fln_bases, :france_track
 
   def initialize
     @fln_resources = 0
+    @france_track = 0
     @available_fln_bases = 1
     @available_fln_underground = 0
     @sector = Sector.new
     @spaces = []
   end
 
+  def apply(action, keep)
+    @fln_resources -= action.cost
+    spaces.delete(action.space) unless keep
+  end
+
   def has(&block)
     block.call(@sector)
   end
 
+  def search(&block)
+    @spaces.select(&block)
+  end
+
   def count(&block)
     block.call(@sector)
+  end
+end
+
+class Options
+  def debug
+    @debug || 0
+  end
+end
+
+class Game
+  attr_reader :action, :actions, :current_card
+  attr_accessor :board, :options, :keep
+
+  def initialize
+    @actions = []
+    @board = Board.new
+    @options = Options.new
+    @keep = false
+  end
+
+  def set(hash)
+    @board.spaces << Sector.new(hash)
+  end
+
+  def d6
+    3
+  end
+
+  def apply(_faction, action)
+    if @options.debug.positive?
+      puts '** _apply'
+      puts action.inspect
+    end
+    @action = action
+    @actions << action
+    @board.apply(action, @keep)
+    true
   end
 end
