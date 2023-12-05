@@ -1,760 +1,400 @@
 #! /usr/bin/env ruby
-# -*- coding: UTF-8 -*-
+# frozen_string_literal: true
+
+require 'colonial_twilight/player'
+require 'colonial_twilight/fln_rules'
+require 'colonial_twilight/fln_bot_rules'
 
 module ColonialTwilight
-
-  # Country.independant
-
   class FLNBot < Player
+    include ColonialTwilight::FLNRules
+    include ColonialTwilight::FLNBotRules
 
-    def play possible_actions
-      @possible_actions = possible_actions
-      _init
-      _start
+    def play_turn(prev_action, possible_actions)
+      init_turn prev_action, possible_actions
+      _start_turn
     end
 
-    private
+    def printd(msg)
+      return if @debug.zero?
 
-    def _start
-      # resources = 0 && Ope Limited as only choice
-      if @board.fln_resources == 0 and limited_ope_only?
-        puts ' => PASS' if @debug
-        h = get_action :pass, -1, :pass, false
-        apply_action h
-        return conducted_action
-      end
-
-      # GOV is first eligible && will be second eligible
-      if not first_eligible? and @game.eligibility_swap?
-        puts ' => TERROR 1' if @debug
-        return terror
-      end
-
-      # exists no FLN base with (POP 1+ && 1- FLN undeground OR POP 0 && 0 FLN underground)
-      if not @board.has(:sectors) {|s| s.fln_bases_1m? and ((not s.pop0? and s.fln_u_1l?) or (s.pop0? and s.fln_u_0?)) }
-        puts ' => TERROR 2' if @debug
-        return terror
-      end
-
-      return _march_or_rally
+      puts msg
     end
 
-    def _march_or_rally
-      # rally would place base : see rally first 2 bullets
-      if @board.available_fln_bases > 0 and @board.has {|s| may_add_fln_base?(s) and ((s.guerrillas >= 3 and (limited_ope_only? ? true : s.gov_cubes_0?)) or s.guerrillas >= 4) }
-        puts ' => RALLY 1' if @debug
-        return rally
-      end
+    ############################################################################
 
-      # #FLN bases * 2 > #FLN at FLN bases + 1d6/2
-      if (@board.count() {|s| s.fln_bases } * 2) > (@board.count() {|s| s.fln_bases_0? ? 0 : s.guerrillas } + rand(7)/2)
-        puts ' => RALLY 2' if @debug
-        return rally
-      end
-
-      puts ' => MARCH 1' if @debug
-      return march
+    def apply_action(action)
+      @game.apply(:FLN, action)
     end
 
-    ##### TERROR OPERATION #####
-    def terror
-      # not POP 0 && 1+ FLN underground && (no FLN bases || 2+ FLN underground)
-      spaces = @board.search(:sectors) {|s| not s.pop0? and s.fln_u_1m? and (s.fln_bases_0? or s.fln_u_2m?) }
-
-      # play event if more profitable
-      vpts = 0
-      (@board.fln_resources + possible_extort).clamp(0, spaces.length).times {|n| vpts += spaces[n].pop }
-      return event if spaces.empty? or (may_play_event? and vpts <= @card.fln_effectiveness)
-
-      # to remove support, highest POP first
-      sort_filter(spaces.select{|s| s.support? }, :pop).each do |selected|
-        break if not may_continue?
-        _terror selected
-        spaces.delete selected
-      end
-
-      # if last campaign, neutral with no terror and pacifiable, highest POP first
-      sort_filter(spaces.select{|s| s.neutral? and not s.has_terror? and pacifiable?(s) and not_selected s }, :pop).each do |selected|
-        break if not may_continue?
-        _terror selected
-        spaces.delete selected
-      end if last_campaign?
-
-      subvert if may_conduct_special_activity? :subvert
-      extort if may_conduct_special_activity? :extort
-
-      return conducted_action
+    def available_resources
+      resources - (@reserved_to_agitate || 0)
     end
 
-    def _terror selected
-      h = get_action :terror, 1, selected
-      transfer h, 1, :fln_underground, selected, selected, :fln_active
-      mks = []
-      mks << [:terror, 1, nil, 0, 1] if not selected.terror?
-      mks << [:alignment, 1, :support, :oppose, :neutral] if selected.oppose?
-      mks << [:alignment, 1, :oppose, :support, :neutral] if selected.support?
-      h[:markers] = mks
-      apply_action h
-    end
-
-    ##### EVENT #####
-    def event
-      if may_play_event? and @card.fln_effective? and ((@card.fln_marked? or @card.capability?) or (rand(7) < 4 and @card.fln_playable?))
-        raise "FIXME event not implemented yet"
-        return conducted_action
-      end
-      return attack
-    end
-
-    ##### SUBVERT SPECIAL ACTIVITY #####
-    def subvert
-      puts ' => SUBVERT' if @debug
-      puts ':: 1+ FLN underground && 1+ algerian cubes' if @debug
-      spaces = @board.search(:sectors) {|s| s.fln_u_1m? and s.algerian_cubes >= 1 }
-
-      # in up to 2 spaces, to remove last cube
-      tmp = spaces.select{|s| s.french_cubes == 0 and s.algerian_cubes < 3 }
-      tmp.shuffle!
-      tmp.sort! {|a,b|
-        r = b.algerian_police <=> a.algerian_police               # police first
-        r = b.algerian_troops <=> a.algerian_troops if r == 0     # troops then
-        r
-      }
-
-      # up to 2 spaces and 2 cubes
-      n = 0
-      2.times do
-        selected = tmp.shift
-        break if selected.nil? or n >= 2
-        n += _remove selected
-        spaces.delete selected
-      end
-
-      # only place FLN from available
-      if n == 0 and @board.available_fln_underground > 0 and not spaces.empty?
-          n += _replace spaces[rand(spaces.length)]
-      end
-
-      # randomly if one piece was removed or GOV is first eligible
-      if n == 1 or not first_eligible? and not spaces.empty?
-        n += _remove spaces[rand(spaces.length)]
-      end
-    end
-
-    def _replace selected
-      h = get_action :subvert, 0, selected
-      transfer h, 1, :algerian_police, selected, :available
-      transfer h, 1, :fln_underground, :available, selected
-      apply_action h
-      2
-    end
-
-    def _remove selected
-      h = get_action :subvert, 0, selected
-      ap = selected.algerian_police.clamp(0, 2)
-      transfer h, ap, :algerian_police, selected, :available if ap > 0
-      at = selected.algerian_troops.clamp(0, 2 - ap)
-      transfer h, at, :algerian_troops, selected, :available if at > 0
-      apply_action h
-      ap + at
-    end
-
-    ##### EXTORT SPECIAL_ACTIVITY #####
-    def extort
-      # 1+ POP && (FLN control or country) && (1+ FLN underground or 2+ FLN if 1+ FLN bases and not country)
-      spaces = @board.search() {|s| not s.pop0? and (s.fln_control? or s.country?) and s.fln_u_1m? and (s.country? or s.fln_bases_0? or s.fln_u_2m?) }
-
-      # 3+ FLN or 2+ FLN if (0 GOV cubes or 0 FLN base)
-      spaces.select{|s| s.guerrillas > 3 or (s.guerrillas > 2 and (s.gov_cubes_0? or s.fln_bases_0?)) }.each do |selected|
-        _extort selected
-        spaces.delete selected
-      end
-
-      # Morocco and Tunisia
-      spaces.select{|s| s.country? }.each do |selected|
-        _extort selected
-        spaces.delete selected
-      end
-
-      # if still at 0 resources, everywhere possible
-      spaces.each do |selected| _extort selected end if @board.fln_resources == 0
-    end
-
-    def _extort selected
-      h = get_action :extort, -1, selected
-      transfer h, 1, :fln_underground, selected, selected, :fln_active
-      apply_action h
-    end
-
-    ##### ATTACK OPERATION #####
-    PIECES = [:gov_base,:french_troops,:french_police,:algerian_troops,:algerian_police].freeze
-    def attack
-      spaces = nil
-      if not may_conduct_special_activity? :ambush
-        # GOV pieces && no FLN bases && 6+ FLN
-        spaces = @board.search(:sectors) {|s| s.has_gov? and s.fln_bases_0? and s.guerrillas > 5 }
-      else
-        # GOV pieces && ((no FLN bases && (6+ FLN or 1+ FLN underground)) || (FLN bases and 2+ FLN underground))
-        spaces = @board.search(:sectors) {|s| s.has_gov? and ((s.fln_bases_0? and (s.guerrillas > 5 or s.fln_u_1m?)) or (not s.fln_bases_0? and s.fln_u_2m?)) }
-      end
-      casualties = _compute_casualties spaces
-      if casualties.inject(0){|n,c| n + c[:french_police] + c[:french_troops] + c[:gov_base] } > 2
-        casualties.each {|c| puts spaces[c[:i]].name; puts c.inspect } if @debug
-        ambushes = 0
-        casualties.each do |c|
-          break if not may_continue?
-          a = c[:n] < 5
-          next if a and ambushes == 2   # only 2 ambushes
-          selected = spaces[c[:i]]
-          h = get_action :attack, 1, selected
-          if a
-            ambushes += 1
-            h[:action] = :ambush
-            transfer h, 1, :fln_underground, selected, selected, :fln_active
-          else
-            transfer h, selected.fln_underground, :fln_underground, selected, selected, :fln_active if selected.fln_underground > 0
-          end
-          PIECES.each {|k| transfer h, c[k], k, selected, :casualties if c[k] != 0 }
-          if !a
-            fc = c[:french_police] + c[:french_troops] + c[:gov_base]
-            fc.times {|t| transfer h, 1, :fln_active, selected, (t%2 == 0 ? :available : :casualties), :fln_underground }
-          end
-          apply_action h
-        end
-
-        if may_continue?
-          # GOV pieces && 3+ FLN underground
-          spaces = @board.search(:sectors) {|s| s.has_gov? and s.guerrillas > 3 }.select{|s| not_selected s }
-          if not spaces.empty?
-            c = _compute_casualties(spaces)[0]
-            selected = spaces[c[:i]]
-            h = get_action :attack, 1, selected
-            transfer h, selected.fln_underground, :fln_underground, selected, selected, :fln_active if selected.fln_underground > 0
-            if rand(7) <= selected.fln
-              PIECES.each {|k| transfer h, c[k], k, selected, :casualties if c[k] != 0 }
-              fc = c[:french_police] + c[:french_troops] + c[:gov_base]
-              fc.times {|t| transfer h, 1, :fln_active, selected, (t%2 == 0 ? :available : :casualties), :fln_underground }
-            end
-            apply_action h
-          end
-        end
-
-        extort if may_conduct_special_activity? :extort
-
-        return conducted_action
-      end
-
-      return _march_or_rally
-    end
-
-    def _compute_casualties spaces
-      casualties = spaces.inject([]) {|n,s|
-        h = {:i=>n.length, :n=>s.fln, :u=>s.fln_underground}
-        PIECES.each {|k| h[k] = 0 }
-        t = 0
-        if s.guerrillas > 5    # auto succes -> 2 casualties
-          t  = h[:french_police] = s.french_police.clamp(0, 2)
-          t += h[:algerian_police] = s.algerian_police.clamp(0, 2 - t) if t < 2
-          t += h[:french_troops] = s.french_troops.clamp(0, 2 - t) if t < 2
-          t += h[:algerian_troops] = s.algerian_troops.clamp(0, 2 - t) if t < 2
-          t += h[:gov_base] = s.gov_bases.clamp(0, 2 - t) if t < 2
-        else            # ambush 1 casualty
-          t = h[:french_police] = 1 if s.french_police > 0
-          t = h[:algerian_police] = 1 if s.algerian_police > 0 and t == 0
-          t = h[:french_troops] = 1 if s.french_troops > 0 and t == 0
-          t = h[:algerian_troops] = 1 if s.algerian_troops > 0 and t == 0
-          t = h[:gov_base]  = 1 if s.fln_bases > 0 and t == 0
-        end
-        h[:t] = t
-        n << h
-      }
-      casualties.shuffle!
-      casualties.sort!{|a,b|
-        r = b[:gov_base]  <=> a[:gov_base]                      # bases
-        r = b[:french_troops] <=> a[:french_troops] if r == 0   # french troops
-        r = b[:french_police] <=> a[:french_police] if r == 0   # french police
-        r = b[:t]  <=> a[:t] if r == 0                          # most pieces
-        r
-      }
-      casualties
-    end
-
-    ##### MARCH OPERATION #####
-    def march
-      # up to 2/3 resources expended unless 8 or less resources
-      rcs_max = (@board.fln_resources <= 8 ? @board.fln_resources : @board.fln_resources * 2 / 3)
-      stop_cond = -> { @expended_resources == rcs_max or not may_continue? }
-
-      spaces = @board.search {|s| not s.fln_bases_0? and s.fln_underground == 0 }
-      puts "spaces :: " + spaces.collect(){|s| s.is_a?(Symbol) ? s.to_s : s.name}.join(' :: ')
-      spaces.each do |space|
-        d = _paths(space, {:fln_underground=>1}) {|h| h[:fln_underground] > 0 }
-      end
-
-      puts "FIXME : march is not implemented yet"
-      exit 1
-
-      # DEAD ZONE => no multiple march
-
-      # march with underground -> unless march will trigger active
-      #
-      # unless limited ope can march again untill cross wilaya or border
-      #
-      # pay per destination
-      #
-
-      ########
-      # march 1 underground FLN to each base that does not have 1
-      #  - lowest cost
-      # while not stop_cond.call
-      #   spaces = @board.search {|s| not s.fln_bases_0? and s.fln_underground == 0 }
-      #   break if spaces.empty?
-      # end
-
-
-      ########
-      # march 1 FLN to each spaces at Support if 0 FLN
-      # march 2 FLN in up to 1 city if Amateur Bombers in effect
-      #  - to stay underground : unless last Campaign
-      #  - lowest cost
-
-      ########
-      # march to remove GOV control in 1 POP+ not at Oppose
-      #  - mountain
-      #  - highest POP
-      #  - lowest cost
-
-      ########
-      # march 3 FLN to non-resettled POP0 with room for a base
-      #  - fewest GOV cubes
-      #  - mountain
-      #  - lowest cost
-      #  - at least 1 FLN stays underground
-
-      # selected = @board.spaces[11]
-      # puts "DEST : #{selected.name}"
-      # d = _paths(selected, {:fln_underground=>1}) {|h| h[:fln_underground] > 0 }
-
-      return conducted_action
-    end
-
-    def _paths dst, want
-      ws = dst.adjacents.map {|s| @board.spaces[s].wilaya }.uniq!       # adjacent Wilayas allowed
-      spaces = @board.search{|s| s != dst and ws.include? s.wilaya }    # corresponding spaces
-      puts "DST : #{dst}\nWilayas : #{ws.inspect}\n" + spaces.collect{|s| s.name }.join(' :: ') if @debug
-      paths, tree = build_paths dst, ws, spaces, want
-      tree.sort{|(x,a),(y,b)| a[:d]<=>b[:d]}.each{|k,v| puts "\t#{v[:d]} #{v[:fln][:max]}:#{v[:fln][:ok]} #{k.name} :: #{v[:adjs].map{|s| s.name}.join(' - ')}" }
-      paths.each{|p| puts p.collect{|s| s.name}.join ' -> '}
-    end
-
-    ##### RALLY OPERATION #####
-    def rally
-      # max 6 spaces unless ope_only => 1
-      selected_max = (limited_ope_only? ? 1 : 6)
-      # up to 2/3 resources expended unless 8 or less resources
-      rcs_max = (@board.fln_resources <= 8 ? @board.fln_resources : @board.fln_resources * 2 / 3)
-      stop_cond = -> { @selected_spaces.length == selected_max or @expended_resources == rcs_max or not may_continue? }
-
-      while not stop_cond.call and @board.available_fln_bases > 0
-        puts ':: may add fln && 3+ FLN && 0 GOV cubes (unless Limited OP)' if @debug
-        break if not _place_base @board.search {|s| may_add_fln_base?(s) and s.guerrillas >= 3 and (limited_ope_only? ? true : s.gov_cubes_0?) and not_selected s }
-      end
-
-      while not stop_cond.call and @board.available_fln_bases > 0
-        puts ':: may add fln && 4+ FLN' if @debug
-        break if not _place_base @board.search {|s| may_add_fln_base?(s) and s.guerrillas >= 4 and not_selected s }
-      end
-
-      while not stop_cond.call or not has_fln_to_place?
-        puts ':: FLN base && ((1+ pop && 1- underground FLN) or ((0 pop || country) && 0 underground FLN))' if @debug
-        spaces = @board.search(:sectors) {|s| s.fln_bases_1m? and ((not s.pop0? and s.fln_u_1l?) or ((s.pop0? or s.country?) and s.fln_u_0?)) and not_selected s }
-        break if not _place_fln_1 spaces
-      end
-
-      if not stop_cond.call
-        puts ':: only once : shift France track towards F' if @debug
-        _shift_france_track
-      end
-
-      while not stop_cond.call and has_fln_to_place?
-        puts ':: non City && Support && 0 underground FLN' if @debug
-        break if not _place_fln_2 @board.search(:sectors) {|s| not (s.city? and s.support?) and s.fln_u_0? and not_selected s }
-      end
-
-      if not @expended_resources == rcs_max and may_continue?
-        puts ':: (FLN control or Base) and 2+ pop && not oppose' if @debug
-        rcs = (rcs_max - @expended_resources)
-        @expended_resources += _reserve_agitate rcs, @board.search(:sectors) {|s| may_agitate? s and s.pop >= 2 and not_selected s }
-      end
-
-      2.times do
-        break if stop_cond.call or not has_fln_to_place?
-        puts ':: anywhere' if @debug
-        break if not _place_fln_3 @board.search() {|s| not_selected s }
-      end
-
-      2.times do
-        break if stop_cond.call or not has_fln_to_place?
-        puts ':: no FLN base but 1+ FLN' if @debug
-        break if not _place_fln_4 @board.search() {|s| s.fln_bases_0? and s.guerrillas >= 1 and not_selected s }
-      end
-
-      if @agitate.nil? and may_continue?
-        puts ':: (FLN control or Base) && not oppose' if @debug
-        rcs = (rcs_max - @expended_resources)
-        @expended_resources += _reserve_agitate rcs, @board.search(:sectors) {|s| may_agitate? s }
-      end
-
-      _agitate @agitate if not @agitate.nil? and may_continue?
-
-      if @debug
-        puts "=> Rally done :\n\texpended resources : #{@expended_resources} #{}"
-        debug_selected_spaces
-      end
-
-      subvert if may_conduct_special_activity? :subvert
-      extort if may_conduct_special_activity? :extort
-
-      return conducted_action
-      # FIXME if NONE => MARCH
-    end
-
-    def _place_base spaces
-      return false if spaces.empty?
-      puts '  => place_base' if @debug
-      selected = spaces[rand(spaces.length)]
-      a = selected.fln_active.clamp(0,2)
-      u = a < 2 ? 2 - a : 0
-      h = get_action :rally, 1, selected
-      transfer h, a, :fln_active, selected, :available, :fln_underground if a != 0
-      transfer h, u, :fln_underground, selected, :available if u != 0
-      transfer h, 1, :fln_base, :available, selected
-      apply_action h
-    end
-
-    def _reserve_agitate max_cost, spaces
-      spaces.select!{|s| not not_selected s } if not has_fln_to_place?
-      spaces.select!{|s| (s.terror + 1 + (not_selected(s) ? 1 : 0)) <= max_cost }
-      return 0 if spaces.empty?
-      spaces.shuffle!
-      spaces.sort! {|a,b|
-        r = b.pop <=> a.pop                                                   # most population
-        r = a.terror <=> b.terror if r == 0                                   # less terror
-        r = (a.support? ? 0 : 1) <=> (b.support? ? 0 : 1) if r == 0           # support
-        r = (not_selected(a) ? 1 : 0) <=> (not_selected(b) ? 1 : 0) if r == 0 # already selected
-        r
-      }
-      @agitate = spaces[0]
-      _place_fln [@agitate] if not_selected @agitate
-      @agitate.terror + 1
-    end
-
-    def _agitate selected
-      puts '  => agitate' if @debug
-      h = get_action :agitate, selected.terror + 1, selected, false
-      h[:already_expended] = true
-      h[:markers] =[ [:alignment, 1, :oppose, selected.alignment, (selected.support? ? :neutral : :oppose)] ]
-      if selected.terror > 0
-        h[:markers].insert(0, [:terror, -selected.terror, nil, selected.terror, 0])
-        @board.terror selected, -selected.terror
-      end
-      @board.shift selected, :oppose
-      apply_action h
-    end
-
-    def _place_fln_1 spaces
-      return false if spaces.empty?
-      puts '  => place_fln_1' if @debug
-      spaces = try_filter(spaces) {|s| not s.country? }     # in Algeria
-      spaces = try_filter(spaces) {|s| not s.gov_cubes_0? } # with GOV cubes
-      spaces = try_filter(spaces) {|s| not s.pop0? }        # POP 1+
-      spaces.shuffle!
-      spaces.sort! do |a,b|
-        r = a.fln_underground <=> b.fln_underground         # least underground FLN
-        r = b.fln_active <=> b.fln_active if r == 0         # most active FLN
-        r
-      end
-      a = spaces[0].fln_underground
-      b = spaces[0].fln_active
-      spaces.select!{|s| s.fln_underground==a and s.fln_active==b }
-      _place_fln spaces
-    end
-
-    def _place_fln_2 spaces
-      return false if spaces.empty?
-      puts '  => place_fln_2' if @debug
-      spaces = sort_filter(spaces, :pop)                    # highest POP
-      _place_fln spaces
-    end
-
-    def _place_fln_3 spaces
-      return false if spaces.empty?
-      puts '  => place_fln_3' if @debug
-      spaces = try_filter(spaces) {|s| s.uncontrolled? and (s.pop + 1).clamp(0, n) > (s.gov_cubes + s.gov_bases) }     # may gain FLN control
-      spaces = try_filter(spaces) {|s| s.gov_control? and (s.pop + 1).clamp(0, n) > (s.gov_cubes + s.gov_bases) }     # may remove GOV control
-      spaces = try_filter(spaces) {|s| ['II','IV','V'].include? s.wilaya }                                            # Wilaya with a city
-      spaces = sort_filter(spaces, :terror, :asc)                                                                     # least terror markers
-      _place_fln spaces
-    end
-
-    def _place_fln_4 spaces
-      return false if spaces.empty?
-      puts '  => place_fln_4' if @debug
-      spaces = try_filter(spaces) {|s| not s.country? }     # in Algeria
-      spaces = sort_filter(spaces, :fln)                    # most FLN
-      spaces = try_filter(spaces) {|s| s.gov_cubes_0? }     # no Government cubes
-      _place_fln spaces
-    end
-
-    def _place_fln spaces
-      puts "\t spaces :: " + spaces.collect(){|s| s.is_a?(Symbol) ? s.to_s : s.name}.join(' - ') if @debug
-      spaces = try_filter(spaces) {|s| s.support? }         # Support spaces 8.1.2#4
-      spaces = try_filter(spaces) {|s| s.guerrillas > 0 }   # friendly 8.1.2#4
-      spaces.shuffle!
-      while not spaces.empty?
-        selected = spaces.shift
-        n = fln_to_place.clamp(0, (selected.pop + 1 - selected.fln))  # at most POP + 1
-        if n == 0 # will only flip underground if #FLN at POP + 1
-          next if selected.fln_active == 0              # will not flip 0 active FLN
-          transfer h, selected.fln_active, :fln_active, selected, selected, :fln_underground
-          return apply_action h
-        end
-        m = n.clamp(0, @board.available_fln_underground)
-        h = get_action :rally, 1, selected
-        transfer h, m, :fln_underground, :available, selected
-        while m < n
-          # leave at least 2 FLN at FLN base or support
-          actives = @board.search(:sectors) {|s| (not s.fln_bases_0? or s.support?) ? s.fln_active > 2 : s.fln_active > 0 }
-          actives = sort_filter(actives, :fln)      # the most active
-          space = actives.shift
-          q = space.fln_active
-          q -= 2 if not space.fln_bases_0? or space.support?
-          q = q.clamp(1, n)
-          transfer h, q, :fln_active, space, selected, :fln_underground
-          m += q
-        end
-        return apply_action h
-      end
+    def event_playable?
+      # FIXME: event is FLN playable
       false
     end
 
-    def _shift_france_track
-      h = get_action :rally, 1, :france_track, false
-      return false if not @board.shift_track :france_track, 1
-      puts '  => shift_france_track' if @debug
-      h[:france_track] = @board.france_track
-      apply_action h
-    end
-
-    ##### ACTIONS #####
-
-    def get_action action, cost, selected, t=true
-      h = { :action => action,
-            :fln_resources => cost,
-            :selected => selected,
-            :controls => {}
-      }
-      h[:transfers] = [] if t
-      h
-    end
-
-    def transfer h, n, what, from, to, towhat=nil
-      h[:controls][from] ||= from.control unless from.is_a? Symbol
-      h[:controls][to] ||= to.control unless to.is_a? Symbol
-      h[:transfers] << @board.transfer( n, what, from, to, towhat)
-      # puts h[:transfers][-1] if @debug
-    end
-
-    # def revert_transfers h
-    #   h[:transfers].each do |tr|
-    #     @board.transfer tr[:n], tr[:towhat], tr[:to], tr[:from], tr[:what]
-    #   end
-    # end
-
-    OPERATIONS = [:rally, :march, :attack, :terror].freeze
-    SPECIAL_ACTIVITIES = [:extort, :subvert, :ambush, :oas].freeze
-    IGNORE = [:pass, :event, :agitate].freeze
-
-    def apply_action h
-      selected = h[:selected]
-      action = h[:action]
-      if OPERATIONS.include? action
-        operation_done action
-        raise "already selected #{selected.name}" if @selected_spaces.include? selected
-        @selected_spaces << selected
-        debug_selected_spaces
-      elsif SPECIAL_ACTIVITIES.include? action
-        special_activity_done action
-        @selected_spaces << selected if action == :ambush
-      elsif not IGNORE.include? action
-        raise "apply unknown action #{h[:action]}"
-      else
-        # :pass, :event, :agitate
-      end
-      cost = h[:fln_resources]
-      @board.shift_track :fln_resources, -cost
-      @expended_resources += cost unless h.has_key? :already_expended # _reserve_agitate
-      h[:resources] = {:cost=>cost, :value=>@board.fln_resources}
-      h[:controls] = h[:controls].inject({}){|ch,(k,v)| ch[k] = [v, k.control] if v != k.control; ch}
-      @game.action_done self, h
-      true
-    end
-
-    #### HELPERS ####
-
-    def may_continue?
-      return false if limited_ope_done?
-      return true if @board.fln_resources > 0
-      return false if not may_conduct_special_activity? :extort
-      puts "\t=> pause to extort" if @debug
-      extort
-      return @board.fln_resources > 0
-    end
-
-    def has_fln_to_place?
-      fln_to_place > 0
-    end
-
-    def fln_to_place
-      (@board.available_fln_underground + @board.count() {|s| s.fln_active })
-    end
-
-    def may_agitate? s
-        (s.fln_control? or s.fln_bases_1m?) and not s.oppose?
-    end
-
-    def may_add_fln_base? s
-      # return false if (s.support? and s.city?) coltwi ?
-      # max 1 base in Algeria AND at least 1 underground FLN
-      (s.fln_bases < (s.country? ? s.max_bases : 1)) and (s.fln_underground > 0)
-    end
-
-    def activate to, from, flns
-      # goes active if moved into Support or crossed International Border && #FLN + GOV cubes (+border) > 3
-      ( (to.support? or from.country?) and (flns + to.gov_cubes + (from.country? ? @board.border_zone_track : 0)) > 3 )
-    end
-
-    def build_paths dst, ws, spaces, want
-      tree = ([dst] + spaces).inject({}) do |h,s|
-        # filter out adjacents : dst OR adjacent to dst OR same wilaya
-        a = s.adjacents.map{|n| @board.spaces[n]}.select{|a| a == dst or (spaces.include?(a) and (s.wilaya == a.wilaya or s == dst))}
-        h[s] = { :adjs=> a, :fln => can_march_from(s, want), :d => 0}
-        h
-      end
-      q = [dst]
-      while not q.empty?
-        s = q.shift
-        h = tree[s]
-        d = h[:d] + 1
-        h[:adjs].each do |a|
-          next if a == dst
-          p = tree[a][:d]
-          if p == 0 or d < p
-            tree[a][:d] = d
-            q << a
-          end
-        end
-      end
-      # filter_out dst, ws, tree
-      build_shortest_paths tree
-    end
-
-    def filter_out dst, ws, tree
-      ws.each do |w|
-        h = tree.select{|s,h| s != dst and s.wilaya == w}
-        next if h.inject(false) {|b,(s,h)| b||h[:fln][:ok]}
-        h.each {|s,v|
-          tree.delete s
-          tree[dst][:adjs].delete s
-        }
-      end
-    end
-
-    def build_shortest_paths tree
-      paths = []
-      def dfs s, tree, paths, path
-        l = tree[s][:adjs].sort{|a,b| tree[a][:d] <=> tree[b][:d]}
-        d = tree[l[0]][:d]
-        if d == 0
-          paths << (path << l[0])
-        else
-          l.each do |a|
-            break if tree[a][:d] > d
-            dfs a, tree, paths, path.clone << a
-          end
-        end
-      end
-      tree.select{|k,v| v[:fln][:ok]}.each{|k,v| dfs k, tree, paths, [k] }
-      [paths, tree]
-    end
-
-    def can_march_from s, want, with={}
-      u = s.fln_underground + (with[:fln_underground]||0)
-      a = s.fln_active + (with[:fln_active]||0)
-      d = 0
-      if not s.fln_bases_0?
-        # at bases, leave last underground FLN, leave 2 FLN
-        if u > 0
-          u -= 1
-          d = 1
-        else
-          a = (a > 2 ? a - 2 : 0)
-        end
-      end
-      if (s.fln_bases_0? and s.support?) or d == 1
-        # march with underground FLN, that could be swaped with an active FLN
-          d = ((a > 0 and u > 0) ? 1 : 0)
-          if a > 0
-            a -= 1
-          elsif u > 0
-            u -= 1
-          end
-      end
-      # never trigger GOV Control on populated spaces
-      max = [(not s.country? and not s.pop0? and not s.gov_control?) ? (s.fln - s.gov) : 666, u + a].min
-      # does it satisfy want conditions
-      ok = (u >= (want[:fln_underground]||0) and a >= (want[:fln_active]||0) and max >= (want[:fln]||1))
-      { :fln_underground=>u, :fln_active=>a, :delta=>d, :max=>max, :ok=>ok }
+    def event_more_effective_than_terror?
+      # FIXME: event would reduce GOV victory margin by as much or more than terror
+      false
     end
 
     def last_campaign?
-      false # FIXME
+      # FIXME: the next Propaganda Card will be the last one of the game
+      true
     end
 
-    def possible_extort
-      # FIXME : if resources at 0 and no spaces
-      # 1+ POP && (FLN control or country) && (1+ FLN underground or 2+ FLN if 1+ FLN bases)
-      spaces = @board.search() {|s| not s.pop0? and (s.fln_control? or s.country?) and s.fln_u_1m? and (s.country? or s.fln_bases_0? or s.fln_u_2m?) }
-      spaces.inject(0) {|n,s| n + s.fln_underground - ((not s.fln_bases_0? and not s.country?) ? 1 : 0) }
+    # PASS #####################################################################
+
+    def pass
+      apply_action @turn.pass(1)
     end
 
-    def pacifiable? s
-      # FIXME if Recall de Gaulle 8.4.2 third bullet point
-      not s.country? and (not s.gov_bases_0? or (s.troop >= 1 and s.police >= 1 and s.gov_control?))
+    # EXTORT ###################################################################
+
+    def extort(except: nil, to_agitate_in: nil)
+      return false if available_resources > 4
+      return false unless @turn.may_special_activity?(:extort)
+      return false if (space = extort_priority(extortable(except: except)).sample).nil?
+
+      apply_action @turn.special_activity_in(:extort, space, -1, to_agitate_in: to_agitate_in).extort
     end
 
-    ##### FILTERS #####
-
-    def not_selected s
-      not @selected_spaces.include? s
+    def extortable(except: nil)
+      @board.search { |s| may_extort_0_in?(s) }.reject { |s| @turn.special_activity_selected?(s) || s == except }
     end
 
-    def try_filter list, &block
-      filtered = list.select &block
-      (filtered.empty? ? list : filtered)
-    end
+    # TERROR ###################################################################
 
-    def sort_filter spaces, sym, order=:desc
-      spaces.shuffle!
-      if order == :desc
-        spaces.sort! {|a,b| b.send(sym) <=> a.send(sym) }
-      else
-        spaces.sort! {|a,b| a.send(sym) <=> b.send(sym) }
+    def terror
+      # return false if !available_resources.positive? && !extort
+      return false if event_playable? && event_more_effective_than_terror?
+
+      until (space = terror_1_priority(@board.search { |s| may_terror_1_in?(s) }).sample).nil?
+        exc = space.fln_underground == 1 ? space : nil
+        break if !available_resources.positive? && !extort(except: exc)
+
+        apply_action @turn.operation_in(:terror, space, 1).terror
       end
-      v = spaces[0].send(sym)
-      spaces.select {|s| s.send(sym) == v }
+
+      if last_campaign?
+        until (space = @board.search { |s| may_terror_2_in?(s) }.sample).nil?
+          exc = space.fln_underground == 1 ? space : nil
+          break if !available_resources.positive? && !extort(except: exc)
+
+          apply_action @turn.operation_in(:terror, space, 1).terror
+        end
+      end
+
+      @turn.operation_done?
     end
 
-  end
+    # ATTACK ###################################################################
 
+    def attack
+      # return false if !available_resources.positive? && !extort
+
+      n = 2
+      ambush_cond = ->(s) { n.positive? && @turn.may_special_activity?(:ambush) && may_ambush_1_in?(s) }
+      cond = ->(s) { may_attack_1_in?(s) || ambush_cond.call(s) }
+      until (space = attack_priority(@board.search(&cond)).sample).nil?
+        break if !available_resources.positive? && !extort
+
+        _apply_attack(space, ambush_cond.call(space))
+        n -= 1
+      end
+
+      until (space = attack_priority(@board.search { |s| may_attack_2_in?(s) }).sample).nil?
+        break if !available_resources.positive? && !extort
+
+        _apply_attack(space, ambush_cond.call(space))
+        n -= 1
+      end
+
+      @turn.operation_done?
+    end
+
+    def _apply_attack(space, ambush)
+      apply_action ambush ? _ambush(space) : _attack(space)
+    end
+
+    def _ambush(space)
+      action = @turn.special_activity_in(:ambush, space, 1).activate(1)
+      casualties = _casualties(space, action, 1)
+      _attrition(action, casualties)
+    end
+
+    def _attack(space)
+      action = @turn.operation_in(:attack, space, 1).activate(space.fln_underground)
+      return action if (d = d6) > space.guerrillas
+
+      casualties = _casualties(space, action, 2)
+      _attrition(action, casualties)
+      action.transfer_from(place_from, :fln_underground) if d == 1
+      action
+    end
+
+    def _casualties(space, action, casualties)
+      num = 0
+      CASUALTIES_PRIORITY.each do |sym|
+        next unless (n = space.send(sym)).positive?
+
+        casualties -= (n = (n > casualties ? casualties : n))
+        num += n
+        action.transfer_to(:casualties, sym, n)
+        action.shift(:commitment, -1) if sym == :gov_bases
+        break if casualties.zero?
+      end
+      num
+    end
+
+    def _attrition(action, casualties)
+      action.transfer_to(:available, :fln_active, (casualties + 1) / 2)
+            .transfer_to(:casualties, :fln_active, casualties / 2)
+    end
+
+    # SUBVERT ##################################################################
+
+    def subvert
+      return false if (spaces = subvert_spaces(@board)).empty?
+
+      n = 2
+      while n.positive?
+        printd('  subvert 1')
+        break if (space = subvert_1_priority(spaces.select { |s| may_subvert_1_in?(s, n) }).sample).nil?
+
+        n -= space.algerian_cubes
+        apply_action _subvert_remove(space, space.algerian_police, space.algerian_troops)
+        spaces.delete(space)
+      end
+      return true if n.zero? || spaces.empty?
+
+      if n == 2 && placeable_guerrillas?
+        printd('  subvert 2')
+        unless (space = spaces.select { |s| may_subvert_2_in?(s) }.sample).nil?
+          apply_action _subvert_replace(space, pick_guerrillas_from)
+          return true
+        end
+      end
+      return false if n == 2 && !@turn.operation_done?
+
+      spaces.shuffle!
+      while n.positive? && !(space = spaces.pop).nil?
+        printd('  subvert 3')
+        n -= (p = (p = space.algerian_police) > n ? n : p)
+        n -= (t = (t = space.algerian_troops) > n ? n : t)
+        apply_action _subvert_remove(space, p, t)
+      end
+      n != 2
+    end
+
+    def _subvert_remove(space, police, troops)
+      @turn.special_activity_in(:subvert, space, 0)
+           .transfer_to(:available, :algerian_police, police)
+           .transfer_to(:available, :algerian_troops, troops)
+    end
+
+    def _subvert_replace(space, place_from)
+      @turn.special_activity_in(:subvert, space, 0)
+           .transfer_to(:available, :algerian_police, 1)
+           .transfer_from(place_from, :fln_underground, 1)
+    end
+
+    # RALLY ####################################################################
+
+    def rally
+      # return false if !available_resources.positive? && !extort
+
+      @reserved_to_agitate = 0
+      # max 6 spaces
+      max_selected = (limited_op_only? ? 1 : 6)
+      # max 2/3 resources unless starts with < 9 resources
+      max_resources = (@board.fln_resources < 9 ? 0 : @board.fln_resources * 2 / 3)
+      max_cost = -> { max_resources.zero? ? 0 : max_resources - @turn.cost }
+
+      stop_cond = if max_resources.zero?
+                    -> { @turn.selected_spaces >= max_selected }
+                  else
+                    -> { @turn.selected_spaces >= max_selected || (@turn.cost + @reserved_to_agitate) >= max_resources }
+                  end
+      stop_cond_base = -> { !available_fln_bases? || stop_cond.call }
+
+      loop do
+        break unless _place_base_in(_rally(1, stop_cond_base, ->(s) { may_rally_1_in?(s) }))
+      end
+
+      loop do
+        break unless _place_base_in(_rally(2, stop_cond_base, ->(s) { may_rally_2_in?(s) }))
+      end
+
+      loop do
+        break unless _place_fln_in(_rally(3, stop_cond, ->(s) { may_rally_3_in?(s) }, priority: 3))
+      end
+
+      _shift_france_track unless stop_cond.call
+
+      loop do
+        break unless _place_fln_in(_rally(5, stop_cond, ->(s) { may_rally_5_in?(s) }, priority: 5))
+      end
+
+      unless stop_cond.call
+        printd('  rally 6')
+        filter = ->(s) { may_rally_6_in?(s, @turn.operation_selected?(s)) }
+        space = _rally_one_space(filter, priority: 6, reselect: true)
+        if _reserve_to_agitate_in?(space, max_cost.call)
+          agitate_in = space
+          _place_fln_in(space, to_agitate_in: space) unless @turn.operation_selected?(space)
+        end
+      end
+
+      2.times do
+        break unless _place_fln_in(_rally(7, stop_cond, ->(s) { may_rally_7_in?(s) }, priority: 7))
+      end
+
+      2.times do
+        break unless _place_fln_in(_rally(8, stop_cond, ->(s) { may_rally_8_in?(s) }, priority: 8))
+      end
+
+      if agitate_in.nil?
+        printd '  rally 9'
+        filter = ->(s) { may_rally_9_in?(s) && (@turn.operation_selected?(s) || @turn.selected_spaces < max_selected) }
+        spaces = rally_9_priority(@board.search(&filter), max_cost.call) { |s| @turn.operation_selected?(s) }.shuffle
+        while (space = spaces.pop)
+          if @turn.operation_selected?(space)
+            agitate_in = space
+          elsif _reserve_to_agitate_in?(space, max_cost.call) && _place_fln_in(space, to_agitate_in: space)
+            agitate_in = space
+          end
+          break unless agitate_in.nil?
+        end
+      end
+      _agitate_in(agitate_in, max_cost.call)
+
+      @turn.operation_done?
+    end
+
+    def _rally(num, stop_cond, filter, priority: nil, reselect: false)
+      return nil if stop_cond.call
+
+      printd("  rally #{num}")
+      return nil if (space = _rally_one_space(filter, priority: priority, reselect: reselect)).nil?
+
+      printd("    -> #{space.name}")
+      extort unless available_resources.positive?
+
+      available_resources.positive? ? space : nil
+    end
+
+    def _rally_one_space(filter, priority: nil, reselect: false)
+      spaces = @board.search(&filter)
+      spaces = spaces.reject(&@turn.method('operation_selected?')) unless reselect
+      spaces = _place_priority(spaces, priority) unless priority.nil?
+      spaces.sample
+    end
+
+    def _place_priority(spaces, priority)
+      return spaces if spaces.size < 2
+
+      spaces = case priority
+               when 3 then rally_3_priority(spaces)
+               when 5 then rally_5_priority(spaces)
+               when 6 then rally_6_priority(spaces)
+               when 7 then rally_7_priority(spaces)
+               else spaces
+               end
+      place_guerrillas_priority(spaces)
+    end
+
+    def _place_base_in(space)
+      return false if space.nil?
+
+      printd "    => _place_base_in : #{space.name}"
+      a, u = (n = space.fln_active) >= 2 ? [2, 0] : [n, 2 - n]
+      apply_action @turn.operation_in(:rally, space, 1)
+                        .transfer_to(:available, :fln_active, a)
+                        .transfer_to(:available, :fln_underground, u)
+                        .transfer_from(:available, :fln_base)
+    end
+
+    def _place_fln_in(space, to_agitate_in: nil)
+      return false if space.nil?
+
+      printd "    => _place_fln_in : #{space.name}"
+      return false if (steps = place_guerrillas_in(space)).empty?
+
+      apply_action @turn.operation_in(:rally, space, 1, to_agitate_in: to_agitate_in).transfer_steps(steps)
+    end
+
+    def _shift_france_track
+      printd('  rally 4')
+      return false if @board.france_track.zero?
+
+      extort unless available_resources.positive?
+      apply_action @turn.operation_in(:rally, :france_track, 1).shift(1)
+    end
+
+    def _agitate_in(space, max_cost)
+      return if space.nil?
+
+      printd "    => _agitate_in : #{space.name}"
+      terror = space.terror
+      oppose = space.oppose? ? 0 : 1
+      if @reserved_to_agitate.positive?
+        terror = terror > @reserved_to_agitate ? @reserved_to_agitate : terror
+        oppose = 0 if terror == @reserved_to_agitate
+        return apply_action @turn.agitate_in(space, terror, oppose)
+      end
+
+      if max_cost.positive? && (cost = (terror + oppose)) > max_cost
+        terror -= (cost - oppose - max_cost)
+        oppose = 0
+      end
+      return if terror.zero?
+
+      if (cost = terror + oppose) < available_resources
+        return apply_action @turn.agitate_in(space, terror, oppose)
+      end
+
+      max_rcs = available_resources + extortable.size
+      if cost > max_rcs
+        terror -= (cost - oppose - max_rcs)
+        oppose = 0
+      end
+      return if terror.zero?
+
+      ((terror + oppose) - available_resources).times { extort(to_agitate_in: space) }
+      apply_action @turn.agitate_in(space, terror, oppose)
+    end
+
+    def _reserve_to_agitate_in?(space, max_cost)
+      return false if space.nil?
+
+      printd "    => _reserve_to_agitate_in : #{space.name}"
+      cost = (rally_cost = (@turn.operation_selected?(space) ? 0 : 1)) + (agitate_cost = max_agitate_cost(space))
+      agitate_cost -= (cost - max_cost) if max_cost.positive? && cost > max_cost
+      return false unless agitate_cost.positive?
+
+      if (cost = (rally_cost + agitate_cost)) < available_resources
+        @reserved_to_agitate = agitate_cost
+        return true
+      end
+      max_rcs = available_resources + extortable.size
+      agitate_cost -= (cost - max_rcs) if cost > max_rcs
+      return false unless agitate_cost.positive?
+
+      ((rally_cost + agitate_cost) - available_resources).times { extort(to_agitate_in: space) }
+      @reserved_to_agitate = agitate_cost
+      true
+    end
+
+    # MARCH# ###################################################################
+
+    def march
+      return false if event_playable? && event_more_effective_than_terror?
+
+      # FIXME
+    end
+  end
 end
