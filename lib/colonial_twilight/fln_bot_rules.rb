@@ -221,6 +221,7 @@ module ColonialTwilight
     end
 
     # Attack
+    CASUALTIES_PRIORITY = %i[french_police algerian_police french_troops algerian_troops gov_bases].freeze
 
     def may_attack_1_in?(space)
       # attack will remove 1+ GOV piece, do not expose a base
