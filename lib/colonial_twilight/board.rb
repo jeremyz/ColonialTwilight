@@ -189,41 +189,41 @@ module ColonialTwilight
       add Country, 'Tunisia'
     end
 
-    def adjacents(idx, *args)
-      @spaces[idx].adjacents = args
+    def adjacents(name, *args)
+      by_name(name).adjacents = args
     end
 
     def set_adjacents
-      adjacents  0, 1, 2, 3, 7, 8, 11, 26
-      adjacents  1, 0, 2, 3, 5
-      adjacents  2, 0, 1, 5, 25, 26, 29
-      adjacents  3, 0, 1, 4, 5, 8, 9
-      adjacents  4, 3, 5, 9, 29
-      adjacents  5, 1, 2, 3, 4, 29
-      adjacents  6, 7, 8
-      adjacents  7, 0, 6, 8, 11, 12
-      adjacents  8, 0, 3, 7, 6, 9
-      adjacents  9, 3, 4, 8, 29
-      adjacents 10, 11, 12, 14
-      adjacents 11, 0, 7, 10, 12, 14, 26
-      adjacents 12, 7, 10, 11
-      adjacents 13, 14
-      adjacents 14, 10, 11, 13, 15, 26, 27
-      adjacents 15, 14, 20, 23, 27
-      adjacents 16, 19
-      adjacents 17, 18, 21, 24, 28
-      adjacents 18, 17, 19, 21, 28
-      adjacents 19, 16, 18, 20, 21, 22
-      adjacents 20, 15, 19, 22, 23
-      adjacents 21, 17, 18, 19, 22, 24
-      adjacents 22, 19, 20, 21, 23, 24
-      adjacents 23, 15, 20, 22, 24, 27
-      adjacents 24, 17, 21, 22, 23, 25, 27, 28
-      adjacents 25, 2, 24, 26, 27
-      adjacents 26, 0, 2, 11, 14, 25, 27
-      adjacents 27, 14, 15, 23, 24, 25, 26
-      adjacents 28, 17, 18, 24
-      adjacents 29, 2, 4, 5, 9
+      adjacents 'Barika', 1, 2, 3, 7, 8, 11, 26
+      adjacents 'Batna', 0, 2, 3, 5
+      adjacents 'Biskra', 0, 1, 5, 25, 26, 29
+      adjacents 'Oum El Bouaghi', 0, 1, 4, 5, 8, 9
+      adjacents 'Tebessa', 3, 5, 9, 29
+      adjacents 'Negrine', 1, 2, 3, 4, 29
+      adjacents 'Constantine', 7, 8
+      adjacents 'Setif', 0, 6, 8, 11, 12
+      adjacents 'Philippeville', 0, 3, 7, 6, 9
+      adjacents 'Souk Ahras', 3, 4, 8, 29
+      adjacents 'Tizi Ouzou', 11, 12, 14
+      adjacents 'Bordj Bou Arreridj', 0, 7, 10, 12, 14, 26
+      adjacents 'Bougie', 7, 10, 11
+      adjacents 'Algiers', 14
+      adjacents 'Medea', 10, 11, 13, 15, 26, 27
+      adjacents 'Orleansville', 14, 20, 23, 27
+      adjacents 'Oran', 19
+      adjacents 'Mecheria', 18, 21, 24, 28
+      adjacents 'Tlemcen', 17, 19, 21, 28
+      adjacents 'Sidi Bel Abbes', 16, 18, 20, 21, 22
+      adjacents 'Mostaganem', 15, 19, 22, 23
+      adjacents 'Saida', 17, 18, 19, 22, 24
+      adjacents 'Mascara', 19, 20, 21, 23, 24
+      adjacents 'Tiaret', 15, 20, 22, 24, 27
+      adjacents 'Ain Sefra', 17, 21, 22, 23, 25, 27, 28
+      adjacents 'Laghouat', 2, 24, 26, 27
+      adjacents 'Sidi Aissa', 0, 2, 11, 14, 25, 27
+      adjacents 'Ain Oussera', 14, 15, 23, 24, 25, 26
+      adjacents 'Morocco', 17, 18, 24
+      adjacents 'Tunisia', 2, 4, 5, 9
     end
 
     def resettle(name)
