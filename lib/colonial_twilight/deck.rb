@@ -1,9 +1,8 @@
 #! /usr/bin/env ruby
 # frozen_string_literal: true
 
-# rubocop:disable Style/Documentation
-
 require 'colonial_twilight/card_attributes'
+
 module ColonialTwilight
   class Card
     include ColonialTwilight::CardAttributes

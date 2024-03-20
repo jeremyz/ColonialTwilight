@@ -15,6 +15,7 @@ module ColonialTwilight
     def shift(val)
       @v += val
       raise "out of track #{@v}" if @v.negative? || @v > @max
+
       @v
     end
 
@@ -147,7 +148,7 @@ module ColonialTwilight
     end
 
     def shift_terror(num = 1)
-      raise "terror cant be negative" if @terror.zero? and num.negative?
+      raise 'terror cant be negative' if @terror.zero? && num.negative?
 
       @terror += num
     end

@@ -1,5 +1,5 @@
 #! /usr/bin/env ruby
-# -*- coding: UTF-8 -*-
+# frozen_string_literal: true
 
 require 'json'
 
@@ -10,7 +10,6 @@ require 'colonial_twilight/fln_bot'
 require 'colonial_twilight/gov_player'
 
 module ColonialTwilight
-
   class Game
 
     MAX_CARD = 71
@@ -168,5 +167,4 @@ module ColonialTwilight
       name.to_json args
     end
   end
-
 end

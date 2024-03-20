@@ -6,7 +6,9 @@ require 'colonial_twilight/spaces'
 module ColonialTwilight
   class Board
     FRANCE_TRACK = %w[A B C D E F].freeze
-    TRACKS = %i[support_commitment opposition_bases fln_resources gov_resources commitment france_track border_zone_track].freeze
+
+    TRACKS = %i[support_commitment opposition_bases fln_resources
+                gov_resources commitment france_track border_zone_track].freeze
 
     attr_reader :spaces
 

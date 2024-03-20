@@ -1,8 +1,6 @@
 #! /usr/bin/env ruby
 # frozen_string_literal: true
 
-# rubocop:disable Style/Documentation
-
 require 'optparse'
 require 'colonial_twilight'
 

@@ -1,9 +1,8 @@
 #! /usr/bin/env ruby
-# -*- coding: UTF-8 -*-
+# frozen_string_literal: true
 
-require 'colonial_twilight'
+require 'io/console'
 require 'colonial_twilight/colorized_string'
-require 'colonial_twilight/game'
 
 module ColonialTwilight
 
@@ -23,44 +22,59 @@ module ColonialTwilight
 
   class Cli
 
-    FRANCE_TRACK=[' A ',' B ',' C ',' D ',' E ',' F '].map {|e| e.white.on_blue}.freeze
+module ColonialTwilight
+  class Cli
+    LOGO = '  ____      _             _       _   _____          _ _ _       _     _    '"\n" \
+           ' / ___|___ | | ___  _ __ (_) __ _| | |_   _|_      _(_) (_) __ _| |__ | |_  '"\n" \
+           '| |   / _ \| |/ _ \| \_ `| |/ _` | |   | | \ \ /\ / / | | |/ _` | \_ `| __| '"\n" \
+           '| |__| (_) | | (_) | | | | | (_| | |   | |  \ V  V /| | | | (_| | | | | |_  '"\n" \
+           ' \____\___/|_|\___/|_| |_|_|\__,_|_|   |_|   \_/\_/ |_|_|_|\__, |_| |_|\__| '"\n" \
+           '                                                           |___/            '
+    FRANCE_TRACK = [' A ', ' B ', ' C ', ' D ', ' E ', ' F '].map { |e| e.white.on_blue }.freeze
     TRACK = {
-      :support_commitment => ' Support & Commitment '.white.on_blue,
-      :opposition_bases => ' FLN bases & Opposition '.black.on_green
-    }
+      gov_score: ' Support & Commitment '.blue.on_black,
+      gov_resources: ' Resources '.blue.on_black,
+      fln_score: ' FLN bases & Opposition '.green.on_black,
+      fln_resources: ' Resources '.green.on_black
+    }.freeze
     FACTION = {
-      :FLN => ' FLN '.black.on_green,
-      :GOV => ' Government '.white.on_blue
+      FLN: ' FLN '.black.on_green,
+      GOV: ' Government '.white.on_blue
     }.freeze
     CONTROL = {
-      :FLN => ' FLN '.black.on_green,
-      :GOV => ' Government '.white.on_blue,
-      :uncontrolled => ' Uncontrolled '.black.on_light_white
+      FLN: ' FLN '.black.on_green,
+      GOV: ' Government '.white.on_blue,
+      uncontrolled: ' Uncontrolled '.black.on_light_white
     }.freeze
     ALIGNMENT = {
-      :oppose => ' Oppose '.black.on_green,
-      :support => ' Support '.white.on_blue,
-      :neutral => ' Neutral '.black.on_light_white
+      oppose: ' Oppose '.black.on_green,
+      support: ' Support '.white.on_blue,
+      neutral: ' Neutral '.black.on_light_white
     }.freeze
     BOXES = {
-      :available => 'Available'.cyan,
-      :out_of_play => 'Out Of Play'.cyan,
-      :casualties => 'Casualties'.cyan,
-      :france_track => 'France Track'.white.on_blue,
-      :border_track => 'Border Track'.yellow.on_black,
+      available: 'Available'.cyan,
+      out_of_play: 'Out Of Play'.cyan,
+      casualties: 'Casualties'.cyan,
+      france_track: 'France Track'.white.on_blue,
+      border_track: 'Border Track'.yellow.on_black
     }.freeze
     FORCES = {
-      :fln_active=>'Active Guerrillas'.red.on_black,
-      :fln_underground=>'Underground Guerrillas'.green.on_black,
-      :fln_base=>'FLN Base'.white.on_black,
-      :french_troops=>'French Troops'.on_blue,
-      :french_police=>'French Police'.black.on_light_blue,
-      :gov_base=>'Government Base'.on_blue,
-      :algerian_troops=>'Algerian Troops'.black.on_green,
-      :algerian_police=>'Algerian Police'.black.on_light_green
+      fln_active: 'Active Guerrillas'.red.on_black,
+      fln_underground: 'Underground Guerrillas'.green.on_black,
+      fln_base: 'FLN Base'.white.on_black,
+      french_troops: 'French Troops'.on_blue,
+      french_police: 'French Police'.black.on_light_blue,
+      gov_base: 'Government Base'.on_blue,
+      algerian_troops: 'Algerian Troops'.black.on_green,
+      algerian_police: 'Algerian Police'.black.on_light_green
+    }.freeze
+    MARKERS = {
+      terror: 'Terror Marker'.yellow,
+      control: 'Control'.yellow,
+      alignment: 'Alignment'.yellow
     }.freeze
 
-    def initialize options
+    def initialize(options)
       @options = options
       @game = ColonialTwilight::Game.new options
     end
@@ -91,11 +105,11 @@ module ColonialTwilight
       puts String::CLS
     end
 
-    def turn_start turn, first, second
+    def turn_start(turn, first, second)
       clear_screen if @options.clearscreen
       puts
-      puts ("=" * 80).white.bold.on_light_green
-      puts " Turn : #{turn.to_s.red} ".black.on_white + "\t 1st Eligible : ".black.on_white + FACTION[first.faction]
+      puts ('=' * 80).white.bold.on_light_green
+      puts " Turn : #{turn.to} ".black.on_white << "\t 1st Eligible : ".black.on_white << FACTION[first.faction]
       puts "\t\t 2nd Eligible : ".black.on_white + FACTION[second.faction]
     end
 
@@ -266,14 +280,15 @@ module ColonialTwilight
     def ask prompt, default=nil
       puts
       c = (default.nil? ? 'y/n' : (default ? 'Y/n' : 'y/N'))
-      printf " => #{prompt.yellow} (#{c}) ? "
-      while true
-        ret = gets.chomp.downcase
+      print " => #{prompt.yellow} (#{c}) ? "
+      loop do
+        ret = gets.chomp.strip.downcase
         return true if YES.include? ret
         return false if NO.include? ret
-        return default if not default.nil?
+        return default unless default.nil?
+
         puts "\t\t\t\t'#{ret}' is not valid, (y/n) ?"
-        printf "\t$ "
+        print "\t$ "
       end
     end
 

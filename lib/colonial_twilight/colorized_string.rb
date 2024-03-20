@@ -93,7 +93,8 @@ class String
   def resolve(key, var)
     return self.class.color_codes[var] + 30 if key == :fg
     return self.class.color_codes[var] + 40 if key == :bg
-    return self.class.color_modes[var] if key == :mode
+
+    self.class.color_modes[var] if key == :mode
   end
 end
 

@@ -37,7 +37,7 @@ module ColonialTwilight
 
     def rally1?(board = @board)
       # rally would place a base (rally 1 or 2)
-      r = board.available_fln_bases.positive? && board.has { |s| (may_rally_1_in?(s) || may_rally_2_in?(s)) }
+      r = board.available_fln_bases.positive? && board.has { |s| may_rally_1_in?(s) || may_rally_2_in?(s) }
       dbg 'RALLY 1', r
       r
     end
@@ -102,7 +102,7 @@ module ColonialTwilight
       if r
         # may agitate if : FLN base or control after rally
         n = already_rallied ? 0 : place_guerrillas_in(space).values.sum
-        r &= (space.fln_bases.positive? || (space.gov < (space.fln + n)))
+        r &= space.fln_bases.positive? || (space.gov < (space.fln + n))
       end
       dbg "  may_rally_6_in : #{space.name}", r
       r
