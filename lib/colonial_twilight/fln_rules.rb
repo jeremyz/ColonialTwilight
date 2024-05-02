@@ -29,6 +29,14 @@ module ColonialTwilight
     end
 
     # March 3.3.2
+    def must_stop?(space_from, space_to)
+      space_from.wilaya != space_to.wilaya || space_from.country? || space_to.country?
+    end
+
+    def must_activate?(board, space_from, space_to, num = 1)
+      (space_from.country? || space_to.support?) &&
+        (num + space_to.gov_cubes + (space_from.country? ? board.border_zone_track : 0)) > 3
+    end
 
     # Attack 3.3.3
     def may_attack_in?(space)

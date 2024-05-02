@@ -158,4 +158,42 @@ describe ColonialTwilight::FLNRules do
       expect(rules.oas_spaces(@board).size).to eq(14)
     end
   end
+
+  describe 'March' do
+    it 'may keep on' do
+      expect(rules.must_stop?(@board.by_name('Saida'), @board.by_name('Mecheria'))).to be false
+    end
+
+    it 'must stop when crossing international borders' do
+      expect(rules.must_stop?(@board.by_name('Morocco'), @board.by_name('Mecheria'))).to be true
+    end
+
+    it 'must stop when crossing international borders' do
+      expect(rules.must_stop?(@board.by_name('Tebessa'), @board.by_name('Tunisia'))).to be true
+    end
+
+    it 'must stop when crossing a wilaya border' do
+      expect(rules.must_stop?(@board.by_name('Setif'), @board.by_name('Barika'))).to be true
+    end
+
+    it 'must not activate' do
+      expect(rules.must_activate?(@board, @board.by_name('Setif'), @board.by_name('Barika'))).to be false
+    end
+
+    it 'might activate when support' do
+      c = @board.by_name('Constantine')
+      c.alignment = :support
+      c.add :french_troops, 1
+      expect(rules.must_activate?(@board, @board.by_name('Setif'), c, 2)).to be false
+      expect(rules.must_activate?(@board, @board.by_name('Setif'), c, 3)).to be true
+    end
+
+    it 'might activate when crossing border' do
+      c = @board.by_name('Mecheria')
+      c.add :french_troops, 1
+      expect(rules.must_activate?(@board, @board.by_name('Morocco'), c, 2)).to be false
+      expect(rules.must_activate?(@board, @board.by_name('Morocco'), c, 3)).to be true
+    end
+
+  end
 end
