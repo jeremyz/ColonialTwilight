@@ -3,9 +3,9 @@
 
 # this adds ascii colorization to String class
 class String
-  RESET = "\033[0m"
-  CLEAR_LINE = "\33[2K\r"
-  CLS = "\033[0;0f\033\[2J"
+  RESET = "\e[0m"
+  CLEAR_LINE = "\e[2K\r"
+  CLS = "\e[0;0f\e\[2J"
 
   @color_codes = {
     black: 0,   light_black: 60,
@@ -61,10 +61,10 @@ class String
 
   private
 
-  START_CODE = /^\033\[([0-9;]+)m/.freeze
+  START_CODE = /^\e\[([0-9;]+)m/.freeze
   # negative lookbehind : (?<! ) + ^ => is not at the start of the line
   # negative lookahead : (?! ) + $ => is not at the end of the line
-  MIDDLE_RESET = /(?<!^)\033\[0m(?!$)/.freeze
+  MIDDLE_RESET = /(?<!^)\e\[0m(?!$)/.freeze
 
   def apply_code(code)
     # prefix with ascii code
@@ -73,17 +73,17 @@ class String
       prev_start_code = ::Regexp.last_match(1)
       # puts "merge : #{code} to #{prev_start_code}"
       # merge in front to preserve previous formating
-      mcode = "\033[#{code};#{prev_start_code}m"
+      mcode = "\e[#{code};#{prev_start_code}m"
       # replace starting code and middle prev code with merged one
       # replace middle reset code with new code
       # the latter does not work on multiple pass like ' '.red.on_blue
       # reset middle code will become red, nothin will be done with blue
       s = sub(START_CODE, mcode)
-          .gsub(MIDDLE_RESET, "\033[#{code}m")
-          .gsub(/(?<!^)\033\[#{prev_start_code}m(?!$)/, mcode)
+          .gsub(MIDDLE_RESET, "\e[#{code}m")
+          .gsub(/(?<!^)\e\[#{prev_start_code}m(?!$)/, mcode)
     else
       # puts "add : #{code}"
-      code = "\033[#{code}m"
+      code = "\e[#{code}m"
       s = (code + self).gsub(MIDDLE_RESET, code)
     end
     # add terminal reset if needed
