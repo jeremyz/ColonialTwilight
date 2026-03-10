@@ -24,7 +24,7 @@ module ColonialTwilight
     end
 
     def dual?
-      (@attributes & SINGLE).zero?
+      !single?
     end
 
     def single?
@@ -68,19 +68,26 @@ module ColonialTwilight
     end
 
     def fln_effective?
-      # FIXME: todo
-      false
+      fln_efficiency.positive?
     end
 
-    def fln_effectiveness
-      # FIXME: todo
+    def fln_efficiency
+      # FIXME: called from Terror, how much it would reduce the Government victory margin
+      # (support / resources / commitment)
       0
     end
 
     def fln_playable?
-      # reduce GOV support or resources or commitment
-      # shift France Track toward F
-      # place FLN base or increase FLN resources
+      # may_play_event && fln_effective?
+      #   if fln_marked?      -> Yes
+      #   or any_capability?  -> Yes
+      #   or 1d6 1-4 && (
+      #     reduce Govt support or resources or commitment
+      #     or shift France Track toward F
+      #     or place FLN base or increase FLN resources
+      #   )                   -> Yes
+      #
+      # when playing Event : FLN always selects itself for a benefit first, then to inflict disadvantage on the Government.
       false
     end
 
@@ -90,6 +97,7 @@ module ColonialTwilight
       s += "#{@num} - #{single? ? 'Single' : 'Dual  '} : #{t} : #{_capability} : #{_momentum}"
       s
     end
+    alias to_s inspect
 
     def _capability
       s = ''
@@ -121,9 +129,13 @@ module ColonialTwilight
 
     def initialize
       @card = Card.new
+      @played = []
     end
 
     def pull(num)
+      raise "card #{num} already played" if @played.include? num
+
+      @played << num
       @card.set(num)
     end
   end
