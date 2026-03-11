@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby
+# frozen_string_literal: true
 
 module ColonialTwilight
   class GOVPlayer < Player
