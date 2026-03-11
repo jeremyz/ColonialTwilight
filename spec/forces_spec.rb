@@ -9,7 +9,7 @@ describe ColonialTwilight::Forces do
     end
 
     it 'nil' do
-      %i[control fln_active].each do |sym|
+      %i[fln_active].each do |sym|
         expect(@f.send(sym)).to be nil
       end
     end
@@ -26,7 +26,7 @@ describe ColonialTwilight::Forces do
     end
 
     it 'nil' do
-      %i[control fln_active fln_bases].each do |sym|
+      %i[fln_active fln_bases].each do |sym|
         expect(@f.send(sym)).to be nil
       end
     end
@@ -44,7 +44,7 @@ describe ColonialTwilight::Forces do
     end
 
     it 'nil' do
-      %i[control algerian_troops algerian_police fln_active fln_bases].each do |sym|
+      %i[algerian_troops algerian_police fln_active fln_bases].each do |sym|
         expect(@f.send(sym)).to be nil
       end
     end
@@ -62,7 +62,7 @@ describe ColonialTwilight::Forces do
     end
 
     it 'nil' do
-      %i[control algerian_troops algerian_police french_troops french_police].each do |sym|
+      %i[algerian_troops algerian_police french_troops french_police].each do |sym|
         expect(@f.send(sym)).to be nil
       end
     end
@@ -110,14 +110,6 @@ describe ColonialTwilight::Forces do
 
     it 'count police' do
       expect(@f.police).to be 8
-    end
-
-    it 'switch control' do
-      expect(@f.control).to be :GOV
-      @f.add :fln_active, 2
-      expect(@f.control).to be :uncontrolled
-      @f.add :fln_active, 1
-      expect(@f.control).to be :FLN
     end
 
     it 'inspect' do

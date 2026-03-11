@@ -10,7 +10,7 @@ module ColonialTwilight
     attr_reader :french_troops, :french_police
     attr_reader :fln_underground, :fln_active
     attr_reader :fln_bases, :gov_bases
-    attr_reader :max_bases, :control
+    attr_reader :max_bases
 
     def initialize(sym)
       @name = sym
@@ -18,7 +18,6 @@ module ColonialTwilight
       @french_troops, @french_police, @gov_bases = 0, 0, 0
       @fln_underground, @fln_active, @fln_bases = 0, 0, 0
       @max_bases = nil
-      @control = :uncontrolled
       @max_bases = 2 if %i[Country Sector].include?(sym)
       _variables_to_remove(sym)&.each do |s|
         instance_variable_set(s, nil)
@@ -33,10 +32,10 @@ module ColonialTwilight
 
     def _variables_to_remove(sym)
       case sym
-      when :available then %i[@control @fln_active]
-      when :casualties then %i[@control @fln_active @fln_bases]
-      when :out_of_play then %i[@control @algerian_troops @algerian_police @fln_active @fln_bases]
-      when :Country then %i[@control @algerian_troops @algerian_police @french_troops @french_police]
+      when :available then %i[@fln_active]
+      when :casualties then %i[@fln_active @fln_bases]
+      when :out_of_play then %i[@algerian_troops @algerian_police @fln_active @fln_bases]
+      when :Country then %i[@algerian_troops @algerian_police @french_troops @french_police]
       when :City then nil
       when :Sector then nil
       end
@@ -59,7 +58,7 @@ module ColonialTwilight
     def data
       h = {}
       %i[algerian_troops algerian_police french_troops french_police gov_bases
-         fln_underground fln_active fln_bases control].each do |sym|
+         fln_underground fln_active fln_bases].each do |sym|
         h[sym] = send(sym) unless send(sym).nil?
       end
       h
@@ -115,7 +114,6 @@ module ColonialTwilight
       else
         raise "unknown force type : #{type}"
       end
-      update_control
     end
 
     def activate(num)
@@ -134,20 +132,6 @@ module ColonialTwilight
 
       @gov_bases += num if type == :gov_bases
       @fln_bases += num if type == :fln_bases
-    end
-
-    def update_control
-      return nil if @control.nil?
-
-      ctr = @control
-      @control = (
-          case gov <=> fln
-          when  0 then :uncontrolled
-          when  1 then :GOV
-          when -1 then :FLN
-          end
-        )
-      @control != ctr
     end
   end
 end

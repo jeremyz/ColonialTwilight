@@ -36,7 +36,7 @@ module ColonialTwilight
     BORDER = 4
 
     attr_reader :wilaya, :sector, :name, :resettled
-    attr_accessor :pop, :terror, :adjacents, :alignment
+    attr_accessor :pop, :terror, :adjacents, :alignment, :control
 
     def initialize(name, wilaya, sector, pop, attrs = 0)
       @name = name
@@ -45,6 +45,7 @@ module ColonialTwilight
       @pop = pop
       @attrs = attrs
       @alignment = :neutral
+      @control = :uncontrolled
       @resettled = false
       @terror = 0
       @forces = Forces.new self.class.name.split('::')[-1].to_sym
@@ -64,6 +65,18 @@ module ColonialTwilight
       @descr = "(#{@wilaya}-#{@sector})"
     end
 
+    def update_control
+      ctr = @control
+      @control = (
+        case @forces.gov <=> @forces.fln
+        when  0 then :uncontrolled
+        when  1 then :GOV
+        when -1 then :FLN
+        end
+      )
+      @control != ctr
+    end
+
     public
 
     def to_s
@@ -73,7 +86,7 @@ module ColonialTwilight
     def inspect
       "\n#{@descr} : #{@terrain}
       population : #{@pop}#{@resettled ? ' resettled' : ''}
-      control    : #{control}
+      control    : #{@control}
       alignment  : #{@alignment}
       terror     : #{@terror}
       #{@forces}
@@ -86,7 +99,7 @@ module ColonialTwilight
 
     %i[gov gov_bases gov_cubes french_cubes algerian_cubes troops police
        french_troops french_police algerian_troops algerian_police
-       fln fln_bases guerrillas fln_underground fln_active max_bases control].each do |sym|
+       fln fln_bases guerrillas fln_underground fln_active max_bases].each do |sym|
       define_method(sym) { @forces.send(sym) }
     end
 
@@ -131,19 +144,20 @@ module ColonialTwilight
     end
 
     def uncontrolled?
-      control == :uncontrolled
+      @control == :uncontrolled
     end
 
     def fln_control?
-      control == :FLN
+      @control == :FLN
     end
 
     def gov_control?
-      control == :GOV
+      @control == :GOV
     end
 
     def add(type, num = 1)
       @forces.add(type, num)
+      update_control
     end
 
     def shift_terror(num = 1)
@@ -207,6 +221,8 @@ module ColonialTwilight
       @independent = false
       @descr += ' : French'
     end
+
+    def update_control; end
 
     def sector?
       false
