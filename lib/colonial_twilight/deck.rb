@@ -1,7 +1,6 @@
-#! /usr/bin/env ruby
 # frozen_string_literal: true
 
-require 'colonial_twilight/card_attributes'
+require_relative 'deck/card_attributes'
 
 module ColonialTwilight
   class Card
