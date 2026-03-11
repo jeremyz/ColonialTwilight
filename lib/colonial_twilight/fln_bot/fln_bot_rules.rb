@@ -51,7 +51,7 @@ module ColonialTwilight
     end
   end
 
-  module FLNRalyRules
+  module FLNRallyRules
     def may_rally_1_in?(space)
       # 3+ FLN and no GOV (unless limited_op_only))
       r = may_rally_in?(space) && may_add_base_in?(space) && space.guerrillas >= 3 &&

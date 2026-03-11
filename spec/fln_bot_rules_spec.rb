@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-require './lib/colonial_twilight/fln_rules'
-require './lib/colonial_twilight/fln_bot_rules'
+require './lib/colonial_twilight/fln_bot/fln_rules'
+require './lib/colonial_twilight/fln_bot/fln_bot_rules'
 require './spec/mock_board'
 
 class FLNRulesImpl
   include ColonialTwilight::FLNRules
   include ColonialTwilight::FLNBotRules
-  include ColonialTwilight::FLNRalyRules
+  include ColonialTwilight::FLNRallyRules
   include ColonialTwilight::FLNExtortRules
   include ColonialTwilight::FLNSubvertRules
   include ColonialTwilight::FLNTerrorRules

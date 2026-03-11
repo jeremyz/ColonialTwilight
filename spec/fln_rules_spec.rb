@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require './lib/colonial_twilight/fln_rules'
+require './lib/colonial_twilight/fln_bot/fln_rules'
 require './lib/colonial_twilight/board'
 require './spec/mock_board'
 
