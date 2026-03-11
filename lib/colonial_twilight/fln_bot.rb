@@ -8,6 +8,12 @@ module ColonialTwilight
   class FLNBot < Player
     include ColonialTwilight::FLNRules
     include ColonialTwilight::FLNBotRules
+    include ColonialTwilight::FLNRalyRules
+    include ColonialTwilight::FLNExtortRules
+    include ColonialTwilight::FLNSubvertRules
+    include ColonialTwilight::FLNTerrorRules
+    include ColonialTwilight::FLNAttackRules
+    include ColonialTwilight::FLNGuidelines
 
     def play_turn(prev_action, possible_actions)
       init_turn prev_action, possible_actions

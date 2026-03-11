@@ -7,6 +7,13 @@ require './spec/mock_board'
 class FLNRulesImpl
   include ColonialTwilight::FLNRules
   include ColonialTwilight::FLNBotRules
+  include ColonialTwilight::FLNRalyRules
+  include ColonialTwilight::FLNExtortRules
+  include ColonialTwilight::FLNSubvertRules
+  include ColonialTwilight::FLNTerrorRules
+  include ColonialTwilight::FLNAttackRules
+  include ColonialTwilight::FLNGuidelines
+
   attr_reader :board
   attr_writer :debug, :limited_op_only, :first_eligible, :will_be_next_first_eligible
 

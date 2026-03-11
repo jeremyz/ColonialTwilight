@@ -49,13 +49,13 @@ module ColonialTwilight
       dbg 'RALLY 2', r
       r
     end
+  end
 
-    # Rally
-
+  module FLNRalyRules
     def may_rally_1_in?(space)
       # 3+ FLN and no GOV (unless limited_op_only))
       r = may_rally_in?(space) && may_add_base_in?(space) && space.guerrillas >= 3 &&
-          (limited_op_only? ? true : space.gov_cubes.zero?)
+          (limited_op_only? || space.gov_cubes.zero?)
       dbg "  may_rally_1_in : #{space.name}", r
       r
     end
@@ -154,9 +154,9 @@ module ColonialTwilight
       f = _filter(spaces) { |s| s.support? && has_resources.call(s) }
       _filter(f) { |s| s.neutral? && has_resources.call(s) }
     end
+  end
 
-    # Extort
-
+  module FLNExtortRules
     def may_extort_0_in?(space)
       r = may_extort_in?(space) && space.fln_underground > (space.fln_bases.zero? ? 0 : 1)
       dbg "  may_extort_0_in : #{space.name}", r
@@ -168,12 +168,12 @@ module ColonialTwilight
       f = _filter(spaces) { |s| s.guerrillas > (s.gov_cubes.positive? && s.fln_bases.positive? ? 2 : 1) }
       _filter(f, &:country?)
     end
+  end
 
-    # Subvert
-
+  module FLNSubvertRules
     def may_subvert_1_in?(space, num)
       # to remove last cubes
-      r = may_subvert_in?(space) && (space.french_cubes.zero? && space.algerian_cubes <= num)
+      r = may_subvert_in?(space) && space.french_cubes.zero? && space.algerian_cubes <= num
       dbg "  may_subvert_1_in : #{space.name}", r
       r
     end
@@ -189,9 +189,9 @@ module ColonialTwilight
       dbg "  may_subvert_2_in : #{space.name}", r
       r
     end
+  end
 
-    # Terror
-
+  module FLNTerrorRules
     def may_terror_1_in?(space)
       # to remove support, do not active last underground at bases
       r = may_terror_in?(space) && space.support? && space.fln_underground > (space.fln_bases.positive? ? 1 : 0)
@@ -218,8 +218,9 @@ module ColonialTwilight
       (!space.country? && space.gov_bases.positive?) ||
         (de_gaule && space.sector? && space.troops.positive? && space.police.positive? && space.gov_control?)
     end
+  end
 
-    # Attack
+  module FLNAttackRules
     CASUALTIES_PRIORITY = %i[french_police algerian_police french_troops algerian_troops gov_bases].freeze
 
     def may_attack_1_in?(space)
@@ -231,7 +232,7 @@ module ColonialTwilight
 
     def may_ambush_1_in?(space)
       # do not expose a base
-      r = may_ambush_in?(space) && (space.fln_bases.zero? ? true : space.guerrillas > 1)
+      r = may_ambush_in?(space) && (space.fln_bases.zero? || space.guerrillas > 1)
       dbg "  may_ambush_1_in : #{space.name}", r
       r
     end
@@ -250,9 +251,10 @@ module ColonialTwilight
       f = _filter(f) { |s| s.french_police.positive? }
       _max(f, :gov)
     end
+  end
 
-    # 8.1.2 - Procedure Guidelines
-
+  # 8.1.2 - Procedure Guidelines
+  module FLNGuidelines
     def _filter(spaces, &block)
       return spaces if spaces.empty?
 
