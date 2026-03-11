@@ -6,12 +6,12 @@ require 'colonial_twilight'
 
 class OptParser
   class Options
-    attr_accessor :debug_bot, :clearscreen, :verbose
+    attr_accessor :debug, :verbose, :ui, :clearscreen
 
     def initialize
-      @debug_bot = false
+      @debug = 0
       @verbose = false
-      @gui = false
+      @ui = :cli
       @clearscreen = false
     end
 
@@ -20,7 +20,7 @@ class OptParser
       parser.separator ''
       parser.separator 'Specific options:'
 
-      add_debug_bot(parser)
+      add_debug(parser)
       add_verbose(parser)
       add_gui(parser)
       add_clearscreen(parser)
@@ -37,30 +37,24 @@ class OptParser
       end
     end
 
-    def add_debug_bot(parser)
-      parser.on('-d', '--debug_bot', 'Run with FLN bot debug messages') do |v|
-        @debug_bot = v
-      end
+    def add_debug(parser)
+      parser.on('-d', '--debug', 'Run with FLN bot debug messages') { @debug += 1 }
     end
 
     def add_verbose(parser)
-      parser.on('-v', '--verbose', 'Run more verbose ui') do |_v|
-        @verbose = true
-      end
+      parser.on('-v', '--verbose', 'Run more verbose ui') { @verbose = true }
     end
 
     def add_gui(parser)
       parser.on('-g', '--gui', 'Run in gui mode') do
-        @gui = true
+        @ui = :gui
         puts 'gui is not implemented yet ...'
         exit
       end
     end
 
     def add_clearscreen(parser)
-      parser.on('-c', '--clearscreen', 'Clear screen before each player turn') do |_v|
-        @clearscreen = true
-      end
+      parser.on('-c', '--clearscreen', 'Clear screen before each player turn') { @clearscreen = true }
     end
   end
 
@@ -75,9 +69,8 @@ class OptParser
   attr_reader :parser, :options
 end
 
-parser = OptParser.new
-options = parser.parse(ARGV)
+options = OptParser.new.parse(ARGV)
 
-require 'colonial_twilight/cli'
-game = ColonialTwilight::Cli.new options
-game.start
+require 'colonial_twilight/game'
+game = ColonialTwilight::Game.new options
+game.launch
