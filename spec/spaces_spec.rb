@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require './lib/colonial_twilight/spaces'
+require './lib/colonial_twilight/board/spaces'
 # require './spec/mock_board'
 
 describe ColonialTwilight::Track do

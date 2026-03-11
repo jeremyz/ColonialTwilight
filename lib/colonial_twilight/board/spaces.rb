@@ -1,7 +1,6 @@
-#! /usr/bin/env ruby
 # frozen_string_literal: true
 
-require 'colonial_twilight/forces'
+require_relative 'forces'
 
 module ColonialTwilight
   class Track
@@ -158,8 +157,8 @@ module ColonialTwilight
     end
 
     def resettle!
-      raise "can't resettle a country " if country?
-      raise "can't resettle a sector with a population =! 1" if @pop != 1
+      raise 'cannot resettle a country' if country?
+      raise 'cannot resettle a sector with a population =! 1' if @pop != 1
 
       @pop = 0
       @resettled = true
@@ -167,11 +166,11 @@ module ColonialTwilight
 
     def shift(towards)
       if towards == :oppose
-        raise "can't shift towards oppose" if oppose?
+        raise 'cannot shift towards oppose' if oppose?
 
         @alignment = (support? ? :neutral : :oppose)
       elsif towards == :support
-        raise "can't shift towards support" if support?
+        raise 'cannot shift towards support' if support?
 
         @alignment = (oppose? ? :neutral : :support)
       else

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require './lib/colonial_twilight/forces'
+require './lib/colonial_twilight/board/forces'
 
 describe ColonialTwilight::Forces do
   describe 'Available' do

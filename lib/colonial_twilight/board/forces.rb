@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 # frozen_string_literal: true
 
 # rubocop:disable Style/AccessorGrouping
@@ -20,7 +19,7 @@ module ColonialTwilight
       @fln_underground, @fln_active, @fln_bases = 0, 0, 0
       @max_bases = nil
       @control = :uncontrolled
-      @max_bases = 2 if %i[Country Sector].include? sym
+      @max_bases = 2 if %i[Country Sector].include?(sym)
       _variables_to_remove(sym)&.each do |s|
         instance_variable_set(s, nil)
       end
@@ -120,7 +119,7 @@ module ColonialTwilight
     end
 
     def activate(num)
-      raise "can't activate #{num}" if @fln_underground < num
+      raise "cannot activate #{num}" if @fln_underground < num
 
       @fln_underground -= num
       @fln_active += num
