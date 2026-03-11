@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module ColonialTwilight
-  OPERATIONS = {
+  FLN_OPERATIONS = {
     pass: 'Pass',
     rally: 'Rally',
     march: 'March',
@@ -9,7 +9,7 @@ module ColonialTwilight
     terror: 'Terror'
   }.freeze
 
-  SPECIAL_ACTIVITIES = {
+  FLN_SPECIAL_ACTIVITIES = {
     extort: 'Extort',
     subvert: 'Subvert',
     ambush: 'Ambush',
@@ -30,6 +30,7 @@ module ColonialTwilight
     end
 
     def sanitize!
+      # FIXME : what is sanitize! method for ?
       map = { src_control: :src, dst_control: :dst }
       control = _collect_indexes(map)
       control.each do |k, v|
@@ -57,18 +58,19 @@ module ColonialTwilight
     def name
       return 'Agitate' if @type == :agitate
 
-      operation? ? OPERATIONS[@type] : SPECIAL_ACTIVITIES[@type]
+      operation? ? FLN_OPERATIONS[@type] : FLN_SPECIAL_ACTIVITIES[@type]
     end
 
     def operation?
-      OPERATIONS.keys.include? @type
+      FLN_OPERATIONS.keys.include?(@type)
     end
 
     def special_activity?
-      SPECIAL_ACTIVITIES.keys.include? @type
+      FLN_SPECIAL_ACTIVITIES.keys.include?(@type)
     end
 
     def transfer_steps(steps)
+      # FIXME : what is transfer_steps method for ?
       steps.each do |k, v|
         transfer_from(k, :fln_underground, v)
       end
@@ -196,7 +198,7 @@ module ColonialTwilight
     end
 
     def operation_in(operation, space, cost, to_agitate_in: nil)
-      raise "unknown operation : #{operation}" unless OPERATIONS.keys.include? operation
+      raise "unknown operation : #{operation}" unless FLN_OPERATIONS.keys.include?(operation)
 
       unless @operation.nil?
         raise "illegal #{operation} in #{@operation}" if @operation != operation
@@ -209,7 +211,7 @@ module ColonialTwilight
     end
 
     def special_activity_in(special_activity, space, cost, to_agitate_in: nil)
-      raise "unknown special activity : #{special_activity}" unless SPECIAL_ACTIVITIES.keys.include? special_activity
+      raise "unknown special activity : #{special_activity}" unless FLN_SPECIAL_ACTIVITIES.keys.include?(special_activity)
       raise "illegal #{special_activity} in #{@special_activity}" if !@special_activity.nil? && @special_activity != special_activity
       raise "illegal #{special_activity} in limited operation #{@operation}" if @limited_op_only
       raise "already selected : #{space.name}" if special_activity_selected?(space)
