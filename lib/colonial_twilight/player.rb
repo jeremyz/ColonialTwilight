@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'colonial_twilight/turn'
+require_relative 'turn'
 
 module ColonialTwilight
   class Player
@@ -40,7 +40,7 @@ module ColonialTwilight
     end
 
     def will_be_next_first_eligible?
-      Game.swap_actions.include? @prev_action
+      Game.swap_actions.include?(@prev_action)
     end
 
     def may_play_event?
