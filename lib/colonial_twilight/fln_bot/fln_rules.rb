@@ -33,8 +33,9 @@ module ColonialTwilight
     end
 
     def must_activate?(board, space_from, space_to, num = 1)
-      (space_from.country? || space_to.support?) &&
-        (num + space_to.gov_cubes + (space_from.country? ? board.border_zone_track : 0)) > 3
+      international = space_from.country? || space_to.country?
+      (international || space_to.support?) &&
+        (num + space_to.gov_cubes + (international ? board.border_zone_track : 0)) > 3
     end
 
     # Attack 3.3.3
