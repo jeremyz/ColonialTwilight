@@ -49,7 +49,7 @@ module ColonialTwilight
 
     # Terror 3.3.4
     def may_terror_in?(space)
-      !space.country? && !space.pop.zero? && space.fln_underground.positive?
+      !space.country? && space.pop.positive? && space.fln_underground.positive?
     end
 
     def terror_spaces(board)
@@ -58,7 +58,7 @@ module ColonialTwilight
 
     # Extort 4.3.1
     def may_extort_in?(space)
-      space.fln_underground.positive? && (space.country? ? space.independent? : !space.pop.zero? && space.fln_control?)
+      space.fln_underground.positive? && (space.country? ? space.independent? : space.pop.positive? && space.fln_control?)
     end
 
     def extort_spaces(board)
@@ -85,7 +85,7 @@ module ColonialTwilight
 
     # OAS 5.3.1
     def may_oas_in?(space)
-      !space.country? && !space.pop.zero? && !space.terror.positive?
+      !space.country? && space.pop.positive? && space.terror.zero?
     end
 
     def oas_spaces(board)
