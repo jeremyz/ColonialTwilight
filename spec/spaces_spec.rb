@@ -12,6 +12,10 @@ describe ColonialTwilight::Track do
     expect(@t.v).to eq 0
   end
 
+  it 'is a Track' do
+    expect(@t.track?).to be true
+  end
+
   it 'shift' do
     expect(@t.shift(3)).to eq 3
     expect(@t.shift(-2)).to eq 1
@@ -56,6 +60,7 @@ describe ColonialTwilight::Sector do
   end
 
   it 'is a Sector' do
+    expect(@s.track?).to be false
     expect(@s.sector?).to be true
     expect(@s.city?).to be false
     expect(@s.country?).to be false

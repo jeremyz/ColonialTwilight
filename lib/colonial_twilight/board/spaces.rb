@@ -12,6 +12,10 @@ module ColonialTwilight
       @name = name
     end
 
+    def track?
+      true
+    end
+
     def max?
       @v == @max
     end
@@ -110,6 +114,10 @@ module ColonialTwilight
        french_troops french_police algerian_troops algerian_police
        fln fln_bases guerrillas fln_underground fln_active bases max_bases].each do |sym|
       define_method(sym) { @forces.send(sym) }
+    end
+
+    def track?
+      false
     end
 
     def sector?
