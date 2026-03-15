@@ -4,11 +4,12 @@ require_relative 'forces'
 
 module ColonialTwilight
   class Track
-    attr_accessor :v
+    attr_accessor :v, :name
 
-    def initialize(max)
+    def initialize(max, name)
       @v = 0
       @max = max
+      @name = name
     end
 
     def shift(val)

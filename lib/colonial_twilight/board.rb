@@ -34,13 +34,13 @@ module ColonialTwilight
       @available = Box.new :available
       @casualties = Box.new :casualties
       @out_of_play = Box.new :out_of_play
-      @support_commitment = Track.new 50
-      @opposition_bases = Track.new 50
-      @fln_resources = Track.new 50
-      @gov_resources = Track.new 50
-      @commitment = Track.new 50
-      @france_track = Track.new 5
-      @border_zone_track = Track.new 4
+      @support_commitment = Track.new(50, 'Support & Commitment')
+      @opposition_bases = Track.new(50, 'Opposition & Bases')
+      @fln_resources = Track.new(50, 'FLN Resources')
+      @gov_resources = Track.new(50, 'GOV Resources')
+      @commitment = Track.new(50, 'Commitment')
+      @france_track = Track.new(5, 'France track')
+      @border_zone_track = Track.new(4, 'Border Zone track')
       setup
     end
 
