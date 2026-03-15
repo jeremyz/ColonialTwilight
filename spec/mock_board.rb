@@ -21,6 +21,10 @@ class Sector
     @name == 'country'
   end
 
+  def bases
+    (@data[:fln_bases] || 0) + (@data[:gov_bases] || 0)
+  end
+
   def max_bases
     3
   end
