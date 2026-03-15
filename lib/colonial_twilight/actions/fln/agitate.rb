@@ -34,7 +34,7 @@ module ColonialTwilight
 
           # with Base and or Control && terror or shift to oppose possible
           def applicable?(space)
-            Rally.applicable?(space) &&
+            Rally.applicable?(space) && !space.country? &&
               (space.fln_bases.positive? || space.fln_control?) && (space.terror.positive? || !space.oppose?)
           end
 

@@ -67,7 +67,7 @@ module ColonialTwilight
         end
 
         def available_modes(_space)
-          nil
+          {}
         end
 
         def possible_spaces(board)
