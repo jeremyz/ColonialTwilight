@@ -12,6 +12,14 @@ module ColonialTwilight
       @name = name
     end
 
+    def max?
+      @v == @max
+    end
+
+    def min?
+      @v.zero?
+    end
+
     def shift(val)
       @v += val
       raise "out of track #{@v}" if @v.negative? || @v > @max

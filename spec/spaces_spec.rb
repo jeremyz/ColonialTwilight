@@ -5,7 +5,7 @@ require './lib/colonial_twilight/board/spaces'
 
 describe ColonialTwilight::Track do
   before do
-    @t = ColonialTwilight::Track.new(10)
+    @t = ColonialTwilight::Track.new(10, 'Fake')
   end
 
   it 'initialize' do
@@ -28,6 +28,19 @@ describe ColonialTwilight::Track do
   it 'data' do
     expect(@t.shift(3)).to eq 3
     expect(@t.data).to eq 3
+  end
+
+  it 'min? && max?' do
+    expect(@t.v).to eq 0
+    expect(@t.min?).to be(true)
+    expect(@t.max?).to be(false)
+    expect(@t.clamp(5)).to eq 5
+    expect(@t.min?).to be(false)
+    expect(@t.max?).to be(false)
+    expect(@t.clamp(12)).to eq 10
+    expect(@t.v).to eq 10
+    expect(@t.min?).to be(false)
+    expect(@t.max?).to be(true)
   end
 end
 
