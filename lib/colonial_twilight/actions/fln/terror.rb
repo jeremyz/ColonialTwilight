@@ -8,7 +8,7 @@ module ColonialTwilight
       # Terror 3.3.4
       class Terror < FlnAction
         def initialize(space, mode)
-          super(space, mode, cost: 1)
+          super(space, mode, 1)
         end
 
         # flip 1 Underground Guerrilla to Active.

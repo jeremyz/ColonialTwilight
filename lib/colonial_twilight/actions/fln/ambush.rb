@@ -8,7 +8,7 @@ module ColonialTwilight
       # Ambush 4.3.3 : max 2
       class Ambush < FlnAction
         def initialize(space)
-          super(space, {}, cost: 0)
+          super(space, {}, 0)
         end
 
         # Activate only 1 Underground Guerrilla

@@ -8,7 +8,7 @@ module ColonialTwilight
       # Extort 4.3.1
       class Extort < FlnAction
         def initialize(space, mode)
-          super(space, mode, cost: 0)
+          super(space, mode, 0)
         end
 
         # flip 1 Underground Guerrilla to Active

@@ -8,7 +8,7 @@ module ColonialTwilight
       # Subvert 4.3.2
       class Subvert < FlnAction
         def initialize(space, mode)
-          super(space, mode, cost: 0)
+          super(space, mode, 0)
           @second = nil
         end
 

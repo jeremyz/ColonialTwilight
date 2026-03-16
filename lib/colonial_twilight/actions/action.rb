@@ -3,12 +3,12 @@
 module ColonialTwilight
   module Actions
     class GameAction
-      def initialize(faction:, space:, cost: 0, mode: nil)
+      def initialize(faction, space, mode, cost)
         @data = {
           faction: faction,
           space: space,
-          cost: cost,
-          mode: mode
+          mode: mode,
+          cost: cost
         }
         validate!
       end

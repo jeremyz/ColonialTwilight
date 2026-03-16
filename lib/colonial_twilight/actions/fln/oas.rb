@@ -8,7 +8,7 @@ module ColonialTwilight
       # OAS 5.3.1
       class Oas < FlnAction
         def initialize(space, mode)
-          super(space, mode, cost: 0)
+          super(space, mode, 0)
         end
 
         # add 1 Terror, set to Neutral

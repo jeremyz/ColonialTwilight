@@ -10,7 +10,7 @@ module ColonialTwilight
       class Agitate < FlnAction
         # 1 resources per Terror marker, then 1 resource for the level shift
         def initialize(space, mode)
-          super(space, mode, cost: (mode[:remove_terror] || 0) + (mode[:shift_oppose] || 0))
+          super(space, mode, (mode[:remove_terror] || 0) + (mode[:shift_oppose] || 0))
         end
 
         def validate!

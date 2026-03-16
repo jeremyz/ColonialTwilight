@@ -8,7 +8,7 @@ module ColonialTwilight
       # March 3.3.2
       class March < FlnAction
         def initialize(space, mode)
-          super(space, mode, cost: 1)
+          super(space, mode, 1)
         end
 
         def cost

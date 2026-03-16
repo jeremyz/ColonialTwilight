@@ -9,7 +9,7 @@ module ColonialTwilight
       # Rally 3.3.1
       class Rally < FlnAction
         def initialize(space, mode)
-          super(space, mode, cost: 1)
+          super(space, mode, 1)
           @agitate = nil
         end
 

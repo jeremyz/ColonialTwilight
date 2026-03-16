@@ -9,7 +9,7 @@ module ColonialTwilight
       # Attack 3.3.3
       class Attack < FlnAction
         def initialize(space)
-          super(space, {}, cost: 1)
+          super(space, {}, 1)
           @ambush = nil
         end
 

@@ -5,8 +5,8 @@ require_relative '../action'
 module ColonialTwilight
   module Actions
     class FlnAction < GameAction
-      def initialize(space, mode, cost: 1)
-        super(faction: :FLN, space: space, mode: mode, cost: cost)
+      def initialize(space, mode, cost)
+        super(:FLN, space, mode, cost)
       end
     end
   end
