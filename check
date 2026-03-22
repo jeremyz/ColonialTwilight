@@ -1,0 +1,51 @@
+#! /bin/bash
+
+clear
+FILES="
+  deck \
+  board \
+  actions \
+  turn
+"
+echo "--"
+echo "check dependencies"
+for file in $FILES
+do
+  echo "* check ${file}"
+  grep require_relative "./lib/colonial_twilight/$file.rb" | grep -v '#' | sed "s@.*require_relative '\(.*\)'@  \1@"
+  ruby -Ilib "./lib/colonial_twilight/$file.rb"
+done
+
+FILES="
+  forces \
+  spaces \
+  board \
+  turn \
+  fln_actions
+"
+echo "--"
+echo "check coverage"
+rm -fr coverage
+files=""
+for file in $FILES
+do
+  files="$files ./spec/${file}_spec.rb"
+done
+rspec $files
+echo "--"
+awk '
+  /<h3>/ {
+    match($0, /<h3>(.*)<\/h3>/, arr); file = arr[1]
+  }
+  /[0-9.]*%/ {
+    match($0, /([0-9.]+)%/, arr); last_pct = arr[1]
+  }
+  /lines covered/ {
+    if (file != "") {
+      print file ": " last_pct "%"
+      file = ""
+    }
+  }
+' coverage/index.html
+echo "--"
+echo
