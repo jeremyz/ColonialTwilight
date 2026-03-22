@@ -26,6 +26,10 @@ class Sector
     @adjacents = data[:adjacents] || []
   end
 
+  def wilaya
+    @data[:wilaya] || false
+  end
+
   def resettled?
     @data[:resettled] || false
   end
